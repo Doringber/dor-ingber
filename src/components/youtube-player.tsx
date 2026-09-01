@@ -38,8 +38,12 @@ export function YoutubePlayer({
             src={youtubePoster(youtubeId)}
             alt=""
             fill
+            unoptimized
             sizes="(max-width: 720px) 100vw, 360px"
             className="media-image"
+            onError={(event) => {
+              event.currentTarget.style.visibility = "hidden";
+            }}
           />
           {heavyGrain ? <span className="grain-thumb" aria-hidden /> : null}
           <span className="media-wash" aria-hidden />
