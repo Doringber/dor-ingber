@@ -102,6 +102,35 @@ test("station frames size from the viewport, not world units", () => {
   assert.notEqual(film.width, neighbor.width);
 });
 
+test("fractional dolly lerps scale even when the focused boolean is wrong", () => {
+  const viewport = 1440;
+  const leaving = stationFrame(
+    { kind: "film", index: 0, position: [1.55, 0.28, -4] },
+    true,
+    viewport,
+    0.35,
+  );
+  const incoming = stationFrame(
+    { kind: "film", index: 1, position: [-1.35, 0.42, -7.4] },
+    false,
+    viewport,
+    0.35,
+  );
+  const hero = focusPlaneWidth(viewport);
+  const neighbor = neighborPlaneWidth(viewport);
+
+  assert.ok(leaving.width < hero);
+  assert.ok(leaving.width > neighbor);
+  assert.ok(incoming.width > neighbor);
+  assert.ok(incoming.width < leaving.width);
+  assert.notEqual(leaving.width, hero);
+  assert.notEqual(incoming.width, neighbor);
+  assert.equal(
+    leaving.width,
+    planeWidthAtFocus(viewport, focusAmount(0, 0.35), false),
+  );
+});
+
 test("scale interpolates with focus: incoming grows, leaving shrinks", () => {
   const viewport = 1440;
   const hero = focusPlaneWidth(viewport);

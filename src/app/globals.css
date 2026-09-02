@@ -326,9 +326,6 @@ button {
 
 .volume-station.is-focused {
   z-index: 2;
-  width: var(--plane-focus-w);
-  height: calc(var(--plane-focus-w) * 9 / 16);
-  opacity: 1;
 }
 
 .volume-station.is-note,

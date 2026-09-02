@@ -125,6 +125,7 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
   const gpuRef = useRef(false);
   const swipeConsumedRef = useRef(false);
   const dragRef = useRef({ x: 0, v: 0, target: 0 });
+  const indexFromDollyRef = useRef(false);
 
   const router = useRouter();
   const pathname = usePathname();
@@ -253,6 +254,10 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
     onePlaneRef.current = onePlane;
     gpuRef.current = gpuReady;
     indexRef.current = index;
+    if (indexFromDollyRef.current) {
+      indexFromDollyRef.current = false;
+      return;
+    }
     targetRef.current = index;
     if (onePlane) {
       dollyRef.current = index;
@@ -308,6 +313,7 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
         indexRef.current,
       );
       if (focused !== indexRef.current) {
+        indexFromDollyRef.current = true;
         indexRef.current = focused;
         setFocusedIndex(focused);
       }
@@ -350,11 +356,13 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
             dolly,
             station.kind === "note",
           );
+          node.style.setProperty("--station-focus", String(sized.focus));
           node.style.width = `${sized.width}px`;
           node.style.height = `${sized.height}px`;
           node.style.opacity = String(focusOpacity(sized.focus));
           node.style.zIndex = String(Math.round(1 + sized.focus * 10));
           node.style.transform = `translate3d(${frame.x}px, ${frame.y}px, ${stationWorldZ(stationIndex, dolly)}px) translate(-50%, -50%)`;
+          node.dataset.focus = sized.focus.toFixed(3);
         }
       }
 
@@ -558,12 +566,12 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
                   data-kind={station.kind}
                   className={`volume-station${station.index === index ? " is-focused" : ""}${station.kind === "note" ? " is-note" : ""}`}
                   style={{
-                    transform: `translate3d(${frame.x}px, ${frame.y}px, ${frame.z}px) translate(-50%, -50%)`,
+                    transform: `translate3d(${frame.x}px, ${frame.y}px, 0px) translate(-50%, -50%)`,
                   }}
                 >
                   <StationPlane
                     station={station}
-                    resetKey={`${station.kind}-${station.index}-${station.index === index}`}
+                    resetKey={`${station.kind}-${station.index}`}
                     playing={playingId === station.index}
                   />
                 </div>
