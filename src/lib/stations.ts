@@ -48,10 +48,6 @@ export type NoteStation = {
 
 export type SpatialStation = FilmStation | LinkStation | NoteStation;
 
-/* Aspect hints only. Rendered size comes from the viewport in scale.ts. */
-const WIDE: [number, number] = [16, 9];
-const FEATURED: [number, number] = [16, 9];
-const SLAB: [number, number] = [12, 20];
 const XS = [1.55, -1.35, 1.75, -1.55, 2.05, -2.85] as const;
 const YS = [0.28, 0.42, 0.3, 0.44, 0.26, 0.62] as const;
 
@@ -63,12 +59,12 @@ function poseAt(
   if (slab) {
     return {
       position: [order % 2 === 0 ? 3.15 : -3.85, 0.12, z],
-      size: SLAB,
+      size: [12, 20],
     };
   }
   return {
     position: [XS[order % XS.length], YS[order % YS.length], z],
-    size: order === 0 ? FEATURED : WIDE,
+    size: [16, 9],
   };
 }
 

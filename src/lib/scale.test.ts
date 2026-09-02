@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
+  FILM_PLANE_ASPECT,
   FOCUS_WIDTH_MAX,
   FOCUS_Z_PX,
   Z_STEP_PX,
+  featuredStampWidth,
   focusPlaneWidth,
   neighborPlaneWidth,
   noteSlabWidth,
@@ -15,13 +17,19 @@ import {
   wideHeight,
 } from "./scale.ts";
 
-test("focused plane is min(78vw, 1280) and never the 2.7-unit stamp", () => {
+test("focused plane is min(78vw, 1280) and never a 2.7 or 3.2 stamp", () => {
   assert.equal(focusPlaneWidth(1440), 1440 * 0.78);
   assert.equal(focusPlaneWidth(2000), FOCUS_WIDTH_MAX);
   assert.equal(wideHeight(1280), 1280 * (9 / 16));
   assert.ok(focusPlaneWidth(1440) > stampWidth());
+  assert.ok(focusPlaneWidth(1440) > featuredStampWidth());
   assert.ok(focusPlaneWidth(1280) > stampWidth());
   assert.notEqual(focusPlaneWidth(1440), stampWidth());
+  assert.notEqual(focusPlaneWidth(1440), featuredStampWidth());
+  assert.notEqual(focusPlaneWidth(1440), 3.2 * 150);
+  assert.deepEqual(FILM_PLANE_ASPECT, [16, 9]);
+  assert.notDeepEqual(FILM_PLANE_ASPECT, [3.2, 1.8]);
+  assert.notDeepEqual(FILM_PLANE_ASPECT, [2.7, 1.52]);
 });
 
 test("neighbors peek at 42vw", () => {
@@ -70,8 +78,10 @@ test("station frames size from the viewport, not world units", () => {
 
   assert.equal(film.width, focusPlaneWidth(1440));
   assert.equal(film.height, wideHeight(film.width));
+  assert.equal(film.z, 0);
   assert.equal(neighbor.width, neighborPlaneWidth(1440));
   assert.ok(neighbor.z < film.z);
   assert.ok(note.height > note.width);
   assert.ok(film.width !== stampWidth());
+  assert.ok(film.width !== featuredStampWidth());
 });
