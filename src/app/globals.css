@@ -433,7 +433,15 @@ button {
 .media-iframe {
   filter: none;
   -webkit-filter: none;
-  pointer-events: auto;
+  pointer-events: none;
+}
+
+.plane-gesture {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  background: transparent;
+  touch-action: none;
 }
 
 .media-image {
