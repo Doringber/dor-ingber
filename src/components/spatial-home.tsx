@@ -329,6 +329,8 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
           if (!frame || !Number.isFinite(stationIndex)) {
             continue;
           }
+          node.style.width = `${frame.width}px`;
+          node.style.height = `${frame.height}px`;
           node.style.transform = `translate3d(${frame.x}px, ${frame.y}px, ${stationWorldZ(stationIndex, dolly)}px) translate(-50%, -50%)`;
         }
       }
@@ -530,6 +532,8 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
                   data-station={station.index}
                   className={`volume-station${station.index === index ? " is-focused" : ""}${station.kind === "note" ? " is-note" : ""}`}
                   style={{
+                    width: frame.width,
+                    height: frame.height,
                     transform: `translate3d(${frame.x}px, ${frame.y}px, ${frame.z}px) translate(-50%, -50%)`,
                   }}
                 >

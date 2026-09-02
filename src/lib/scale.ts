@@ -1,5 +1,7 @@
 import type { SpatialStation } from "@/lib/stations";
 
+export const FILM_PLANE_ASPECT: [number, number] = [16, 9];
+export const NOTE_SLAB_ASPECT: [number, number] = [12, 20];
 export const FOCUS_WIDTH_VW = 0.78;
 export const FOCUS_WIDTH_MAX = 1280;
 export const NEIGHBOR_WIDTH_VW = 0.42;
@@ -8,8 +10,9 @@ export const SLAB_ASPECT = 2.05 / 1.2;
 export const NOTE_SLAB_VW = 0.36;
 export const NOTE_SLAB_MAX = 480;
 export const STAMP_WORLD = 2.7;
+export const STAMP_FEATURED = 3.2;
 export const STAMP_UNIT = 150;
-export const FOCUS_Z_PX = -96;
+export const FOCUS_Z_PX = 0;
 export const Z_STEP_PX = 280;
 export const VOLUME_LIFT_PX = 36;
 export const XY_POSE_UNIT = 2;
@@ -44,6 +47,10 @@ export function noteSlabHeight(width: number): number {
 
 export function stampWidth(): number {
   return STAMP_WORLD * STAMP_UNIT;
+}
+
+export function featuredStampWidth(): number {
+  return STAMP_FEATURED * STAMP_UNIT;
 }
 
 export function planeWidth(
