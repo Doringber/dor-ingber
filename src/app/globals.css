@@ -125,6 +125,9 @@ button {
 }
 
 .spatial-root {
+  --plane-focus-w: min(78vw, 1280px);
+  --plane-neighbor-w: 42vw;
+  --plane-note-w: min(36vw, 480px);
   position: fixed;
   inset: 0;
   overflow: hidden;
@@ -312,10 +315,24 @@ button {
   position: absolute;
   left: 0;
   top: 0;
+  width: var(--plane-neighbor-w);
+  height: calc(var(--plane-neighbor-w) * 9 / 16);
   transform-style: preserve-3d;
   pointer-events: auto;
   min-width: 44px;
   min-height: 44px;
+}
+
+.volume-station.is-focused {
+  z-index: 2;
+  width: var(--plane-focus-w);
+  height: calc(var(--plane-focus-w) * 9 / 16);
+}
+
+.volume-station.is-note,
+.volume-station.is-note.is-focused {
+  width: var(--plane-note-w);
+  height: calc(var(--plane-note-w) * 2.05 / 1.2);
 }
 
 .volume-station .fallback-plane,
@@ -335,10 +352,6 @@ button {
 
 .volume-station .film-window:not(.is-note) {
   aspect-ratio: auto;
-}
-
-.volume-station.is-focused {
-  z-index: 2;
 }
 
 .fallback-stage {
@@ -381,6 +394,10 @@ button {
   font-size: 1.35rem;
   line-height: 1.35;
   text-align: right;
+}
+
+.volume-station .fallback-note-body {
+  font-size: clamp(28px, 2.2vw, 32px);
 }
 
 .fallback-link {
@@ -749,6 +766,18 @@ iframe[title*="Netlify"] {
 @media (min-width: 720px) {
   .mobile-only {
     display: none !important;
+  }
+
+  .fallback-film {
+    width: min(78vw, 1280px);
+  }
+
+  .fallback-note {
+    width: min(36vw, 480px);
+  }
+
+  .fallback-note-body {
+    font-size: clamp(28px, 2.2vw, 32px);
   }
 
   .note-reader-rebate {

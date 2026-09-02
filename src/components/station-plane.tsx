@@ -55,7 +55,7 @@ function StillPoster({ src, title }: { src: string; title: string }) {
           src={src}
           alt={title}
           fill
-          sizes="(max-width: 720px) 100vw, 920px"
+          sizes="(max-width: 720px) 100vw, min(78vw, 1280px)"
           className="media-image"
         />
         <span className="grain-thumb" aria-hidden />
