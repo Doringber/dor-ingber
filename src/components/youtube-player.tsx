@@ -33,7 +33,7 @@ export function YoutubePlayer({
             alt=""
             fill
             unoptimized
-            sizes="(max-width: 720px) 100vw, min(78vw, 1280px)"
+            sizes="(max-width: 720px) 100vw, min(56vw, 960px)"
             className="media-image"
             onError={(event) => {
               event.currentTarget.style.visibility = "hidden";
