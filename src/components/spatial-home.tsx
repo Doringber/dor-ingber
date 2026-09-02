@@ -154,11 +154,14 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
     [index, stations, viewportWidth],
   );
   const framesRef = useRef(frames);
-  framesRef.current = frames;
   const viewportWidthRef = useRef(viewportWidth);
-  viewportWidthRef.current = viewportWidth;
   const stationsRef = useRef(stations);
-  stationsRef.current = stations;
+
+  useEffect(() => {
+    framesRef.current = frames;
+    viewportWidthRef.current = viewportWidth;
+    stationsRef.current = stations;
+  }, [frames, stations, viewportWidth]);
 
   const setFocusedIndex = useCallback((next: number) => {
     setUserIndex(next);
