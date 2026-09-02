@@ -1,0 +1,16 @@
+{
+  "slug": "findmywatermalon",
+  "kind": "game",
+  "href": "https://doringber.github.io/findmywatermalon",
+  "repo": "https://github.com/Doringber/findmywatermalon",
+  "year": 2026,
+  "kicker": "GAME",
+  "title": {
+    "he": "מצא את האבטיח",
+    "en": "Find My Watermelon"
+  },
+  "summary": {
+    "he": "מצלמה ובדיקת נקישה לאבטיח בשל. רץ על המכשיר, כלום לא עולה לשרת.",
+    "en": "Camera + knock test for a ripe watermelon, on-device, nothing uploaded."
+  }
+}
