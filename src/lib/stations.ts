@@ -44,89 +44,83 @@ export type NoteStation = {
 
 export type SpatialStation = FilmStation | LinkStation | NoteStation;
 
-const FILM_POSES: ReadonlyArray<{
-  position: [number, number, number];
-  size: [number, number];
-}> = [
-  { position: [1.55, 0.28, -4.0], size: [3.2, 1.8] },
-  { position: [-1.35, 0.42, -7.4], size: [2.7, 1.52] },
-  { position: [-2.85, 0.62, -10.8], size: [2.3, 1.29] },
-];
+const WIDE: [number, number] = [2.7, 1.52];
+const FEATURED: [number, number] = [3.2, 1.8];
+const SLAB: [number, number] = [1.2, 2.05];
+const XS = [1.55, -1.35, 1.75, -1.55, 2.05, -2.85] as const;
+const YS = [0.28, 0.42, 0.3, 0.44, 0.26, 0.62] as const;
 
-const LINK_POSES: ReadonlyArray<{
-  position: [number, number, number];
-  size: [number, number];
-}> = [
-  { position: [1.75, 0.3, -14.2], size: [2.7, 1.52] },
-  { position: [-1.55, 0.44, -17.6], size: [2.5, 1.41] },
-  { position: [2.05, 0.26, -21.0], size: [2.3, 1.29] },
-];
-
-const NOTE_POSES: ReadonlyArray<{
-  position: [number, number, number];
-  size: [number, number];
-}> = [
-  { position: [3.15, 0.1, -24.4], size: [1.2, 2.05] },
-  { position: [-3.85, 0.18, -27.8], size: [1.2, 2.05] },
-];
-
-const LINK_SLUG_ORDER = ["findmywatermalon", "thinkingbreak", "vintage-market"];
+function poseAt(
+  order: number,
+  slab: boolean,
+): { position: [number, number, number]; size: [number, number] } {
+  const z = -4 - order * 3.4;
+  if (slab) {
+    return {
+      position: [order % 2 === 0 ? 3.15 : -3.85, 0.12, z],
+      size: SLAB,
+    };
+  }
+  return {
+    position: [XS[order % XS.length], YS[order % YS.length], z],
+    size: order === 0 ? FEATURED : WIDE,
+  };
+}
 
 export function buildStations(
   works: Work[],
   notes: WritingNote[],
 ): SpatialStation[] {
-  const films: SpatialStation[] = works
-    .filter(isFilmWork)
-    .slice(0, 3)
-    .map((work, index) => {
-      const pose = FILM_POSES[index] ?? FILM_POSES[FILM_POSES.length - 1];
-      return {
+  const stations: SpatialStation[] = [];
+  let order = 0;
+
+  for (const work of works) {
+    if (isFilmWork(work)) {
+      const pose = poseAt(order, false);
+      stations.push({
         kind: "film",
-        index,
+        index: stations.length,
         youtubeId: work.youtubeId,
         title: work.title,
         position: pose.position,
         size: pose.size,
-      };
-    });
-
-  const links: SpatialStation[] = works
-    .filter(isLinkedWork)
-    .sort((a, b) => {
-      const aOrder = LINK_SLUG_ORDER.indexOf(a.slug);
-      const bOrder = LINK_SLUG_ORDER.indexOf(b.slug);
-      return (aOrder === -1 ? 99 : aOrder) - (bOrder === -1 ? 99 : bOrder);
-    })
-    .slice(0, 3)
-    .map((work, index) => {
-      const pose = LINK_POSES[index] ?? LINK_POSES[LINK_POSES.length - 1];
-      return {
+      });
+      order += 1;
+      continue;
+    }
+    if (isLinkedWork(work)) {
+      const pose = poseAt(order, false);
+      stations.push({
         kind: work.kind,
-        index: films.length + index,
+        index: stations.length,
         href: work.href,
         title: work.title,
         position: pose.position,
         size: pose.size,
-      };
-    });
+      });
+      order += 1;
+    }
+  }
 
-  const slabs: SpatialStation[] = notes.slice(0, 2).map((note, index) => {
-    const pose = NOTE_POSES[index] ?? NOTE_POSES[NOTE_POSES.length - 1];
-    return {
+  for (const note of notes) {
+    const pose = poseAt(order, true);
+    stations.push({
       kind: "note",
-      index: films.length + links.length + index,
+      index: stations.length,
       slug: note.slug,
       title: note.title,
       date: note.date,
       content: note.content,
-      noteNumber: formatNoteNumber(index),
+      noteNumber: formatNoteNumber(
+        stations.filter((station) => station.kind === "note").length,
+      ),
       position: pose.position,
       size: pose.size,
-    };
-  });
+    });
+    order += 1;
+  }
 
-  return [...films, ...links, ...slabs];
+  return stations;
 }
 
 export function firstNoteIndex(stations: SpatialStation[]): number {
