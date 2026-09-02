@@ -1,4 +1,8 @@
-import { linkedStillSrc, planeKicker, type StationKicker } from "@/lib/kickers";
+import {
+  createKickerCounter,
+  linkedStillSrc,
+  type StationKicker,
+} from "@/lib/kickers";
 import {
   isFilmWork,
   isLinkedWork,
@@ -77,6 +81,7 @@ export function buildStations(
   notes: WritingNote[],
 ): SpatialStation[] {
   const stations: SpatialStation[] = [];
+  const nextKicker = createKickerCounter();
   let order = 0;
 
   for (const work of works) {
@@ -86,7 +91,7 @@ export function buildStations(
         kind: "film",
         index: stations.length,
         slug: work.slug,
-        kicker: planeKicker({ kind: "film", slug: work.slug }),
+        kicker: nextKicker({ kind: "film", slug: work.slug }),
         youtubeId: work.youtubeId,
         title: work.title,
         position: pose.position,
@@ -101,7 +106,7 @@ export function buildStations(
         kind: work.kind,
         index: stations.length,
         slug: work.slug,
-        kicker: planeKicker({ kind: work.kind, slug: work.slug }),
+        kicker: nextKicker({ kind: work.kind, slug: work.slug }),
         href: work.href,
         title: work.title,
         position: pose.position,
@@ -113,11 +118,12 @@ export function buildStations(
 
   for (const note of notes) {
     const pose = poseAt(order, true);
+    const kicker = nextKicker({ kind: "note", slug: note.slug });
     stations.push({
       kind: "note",
       index: stations.length,
       slug: note.slug,
-      kicker: planeKicker({ kind: "note", slug: note.slug }),
+      kicker,
       title: note.title,
       date: note.date,
       content: note.content,
@@ -142,8 +148,10 @@ export function stationLabel(station: SpatialStation): string {
   return `${station.title.he} / ${station.title.en}`;
 }
 
-export function stationKicker(station: Pick<SpatialStation, "kind" | "slug">): StationKicker {
-  return planeKicker(station);
+export function stationKicker(
+  station: Pick<SpatialStation, "kicker">,
+): StationKicker {
+  return station.kicker;
 }
 
 export function stationStillSrc(station: SpatialStation): string | null {
