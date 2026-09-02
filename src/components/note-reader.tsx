@@ -124,6 +124,9 @@ export function NoteReader({
       onPointerUp={onPointerUp}
       onPointerCancel={onPointerUp}
     >
+      <p className="kicker note-reader-kicker" data-kicker-on="void">
+        NOTE · {number}
+      </p>
       <div className="note-reader-rebate film-rebate">
         <span className="film-rebate-age" aria-hidden />
         <div className="note-reader-sheet">
@@ -142,7 +145,6 @@ export function NoteReader({
               dir="rtl"
               lang="he"
             >
-              <p className="kicker note-reader-kicker">NOTE · {number}</p>
               <h1 id="note-reader-title" className="note-reader-title">
                 {title}
               </h1>

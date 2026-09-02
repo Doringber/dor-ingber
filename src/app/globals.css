@@ -322,6 +322,7 @@ button {
   top: 0;
   width: var(--plane-neighbor-w);
   height: calc(var(--plane-neighbor-w) * 9 / 16);
+  overflow: visible;
   transform-style: preserve-3d;
   pointer-events: auto;
   min-width: 44px;
@@ -373,8 +374,20 @@ button {
 .fallback-measure,
 .fallback-measure.is-note,
 .fallback-measure.is-note .fallback-plane {
+  overflow: visible;
   pointer-events: auto;
   will-change: transform;
+}
+
+.station-stack {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.fallback-measure .station-stack {
+  width: auto;
+  height: auto;
 }
 
 .fallback-plane {
@@ -547,9 +560,16 @@ button {
 .plane-kicker {
   position: absolute;
   left: 16px;
-  bottom: 14px;
+  bottom: 10px;
   z-index: 16;
   pointer-events: none;
+}
+
+.plane-kicker.is-void {
+  left: 0;
+  right: auto;
+  top: calc(100% + 10px);
+  bottom: auto;
 }
 
 .plane-player {
@@ -651,7 +671,9 @@ iframe[title*="Netlify"] {
   inset: 0;
   z-index: 50;
   display: grid;
-  place-items: center;
+  grid-template-rows: auto 1fr;
+  place-items: stretch;
+  background: #1c1612;
   pointer-events: auto;
   touch-action: pan-y;
 }
@@ -729,12 +751,15 @@ iframe[title*="Netlify"] {
 .note-reader-article {
   width: min(36ch, calc(100% - 48px));
   margin: 0 auto;
-  padding: 72px 0 28px;
+  padding: 56px 0 28px;
 }
 
 .note-reader-kicker {
-  margin-bottom: 18px;
-  text-align: center;
+  position: relative;
+  z-index: 4;
+  margin: 0;
+  padding: 14px 20px 10px;
+  text-align: start;
 }
 
 .note-reader-title {
@@ -808,13 +833,25 @@ iframe[title*="Netlify"] {
     font-size: clamp(28px, 2.2vw, 32px);
   }
 
+  .note-reader {
+    display: grid;
+    place-items: center;
+    grid-template-rows: 1fr;
+  }
+
   .note-reader-rebate {
     width: min(920px, calc(100vw - 12vmin));
     height: min(92vh, calc(100vh - 12vmin));
     padding: 7vmin;
   }
 
-  .note-reader-kicker,
+  .note-reader-kicker {
+    position: absolute;
+    top: 22px;
+    left: 28px;
+    padding: 0;
+  }
+
   .note-reader-title {
     text-align: center;
   }
@@ -855,6 +892,10 @@ iframe[title*="Netlify"] {
   .kicker,
   .meta {
     font-size: 11px;
+  }
+
+  .plane-kicker.is-void {
+    display: none;
   }
 
   .note-reader-title {

@@ -34,21 +34,30 @@ function FilmRebate({
   slug: string;
 }) {
   return (
-    <div
-      className={`station-plane fallback-plane film-rebate${note ? " fallback-note" : " fallback-film"}${tone ? " is-tone" : ""}`}
-      data-slug={slug}
-      data-kicker={kicker ?? ""}
-    >
-      <span className="film-rebate-age" aria-hidden />
-      <span className="film-rebate-sprockets" aria-hidden />
-      <span className="film-rebate-mark" aria-hidden>
-        9 6
-      </span>
-      <div className={`film-window${note ? " is-note" : ""}`}>
-        {children}
-        {kicker ? <span className="kicker plane-kicker">{kicker}</span> : null}
+    <div className={`station-stack${note ? " is-note" : ""}`}>
+      <div
+        className={`station-plane fallback-plane film-rebate${note ? " fallback-note" : " fallback-film"}${tone ? " is-tone" : ""}`}
+        data-slug={slug}
+        data-kicker={kicker ?? ""}
+      >
+        <span className="film-rebate-age" aria-hidden />
+        <span className="film-rebate-sprockets" aria-hidden />
+        <span className="film-rebate-mark" aria-hidden>
+          9 6
+        </span>
+        <div className={`film-window${note ? " is-note" : ""}`}>{children}</div>
+        {!note && kicker ? (
+          <span className="kicker plane-kicker" data-kicker-on="rebate">
+            {kicker}
+          </span>
+        ) : null}
+        <GestureLayer />
       </div>
-      <GestureLayer />
+      {note && kicker ? (
+        <span className="kicker plane-kicker is-void" data-kicker-on="void">
+          {kicker}
+        </span>
+      ) : null}
     </div>
   );
 }

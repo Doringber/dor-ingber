@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import { existsSync } from "node:fs";
 import { LINKED_FACES, numberKickersByKind } from "./kickers.ts";
+import { contrastRatio, KICKER_TEAL } from "./contrast.ts";
 import {
   FOCUS_LIGHT,
   NEIGHBOR_LIGHT,
@@ -14,6 +15,8 @@ import {
 
 const css = readFileSync(new URL("../app/globals.css", import.meta.url), "utf8");
 const shader = readFileSync(new URL("./gpu/volume.wgsl", import.meta.url), "utf8");
+const plane = readFileSync(new URL("../components/station-plane.tsx", import.meta.url), "utf8");
+const reader = readFileSync(new URL("../components/note-reader.tsx", import.meta.url), "utf8");
 
 test("volume CSS and shader stay warm dark, not pure black", () => {
   assert.match(css, /#1c1612/i);
@@ -49,6 +52,26 @@ test("neighbor light sits at 0.55 and lerps with focus", () => {
   assert.equal(FOCUS_LIGHT, 1);
   assert.match(css, /opacity:\s*0\.55/);
   assert.match(css, /--station-light:\s*0\.55/);
+});
+
+test("teal kicker fails on kraft and passes on the void", () => {
+  assert.equal(KICKER_TEAL, "#0BB46F");
+  assert.ok(contrastRatio(KICKER_TEAL, NOTE_READER) < 1.5);
+  assert.ok(contrastRatio(KICKER_TEAL, NOTE_SLAB) < 1.5);
+  assert.ok(contrastRatio(KICKER_TEAL, VOLUME_BG) >= 4.5);
+  assert.ok(contrastRatio(NOTE_INK, NOTE_READER) >= 4.5);
+});
+
+test("kickers sit on the rebate or the void, never on kraft paper", () => {
+  assert.match(plane, /data-kicker-on="rebate"/);
+  assert.match(plane, /data-kicker-on="void"/);
+  assert.match(plane, /film-window\$\{note \? " is-note" : ""\}`\}>\{children\}<\/div>/);
+  assert.match(plane, /\{!note && kicker \? \(/);
+  assert.match(reader, /data-kicker-on="void"/);
+  assert.doesNotMatch(reader, /note-reader-sheet[\s\S]*note-reader-kicker/);
+  assert.doesNotMatch(reader, /note-reader-article[\s\S]*note-reader-kicker/);
+  assert.match(css, /\.plane-kicker\.is-void/);
+  assert.match(css, /\.note-reader[\s\S]*?background:\s*#1c1612/);
 });
 
 test("yossi note and watermelon GAME · 01 stay in the lock", () => {
