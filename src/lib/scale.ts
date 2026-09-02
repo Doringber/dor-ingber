@@ -35,6 +35,8 @@ export function focusAmount(index: number, dolly: number): number {
   return clampFocus(1 - Math.abs(index - dolly));
 }
 
+export const focusProgress = focusAmount;
+
 export function focusPlaneWidth(viewportWidth: number): number {
   return Math.min(viewportWidth * FOCUS_WIDTH_VW, FOCUS_WIDTH_MAX);
 }
