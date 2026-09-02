@@ -665,7 +665,7 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
         </div>
 
         <div className="mobile-kicker mobile-only">
-          <p className="kicker">{current ? stationKicker(current) : "FILM"}</p>
+          <p className="kicker">{current ? stationKicker(current) : "FILM · 01"}</p>
           <p>
             This site explores spatial stories
             <br />
