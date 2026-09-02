@@ -772,6 +772,10 @@ iframe[title*="Netlify"] {
     width: min(78vw, 1280px);
   }
 
+  .fallback-note {
+    width: min(36vw, 480px);
+  }
+
   .fallback-note-body {
     font-size: clamp(28px, 2.2vw, 32px);
   }
