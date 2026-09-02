@@ -1,5 +1,5 @@
 import type { LocaleText, Work, WritingNote } from "@/lib/types";
-import { formatNoteNumber } from "@/lib/writing";
+import { formatNoteNumber } from "@/lib/writing-format";
 
 export const LOOK_CLAMP_RAD = (12 * Math.PI) / 180;
 export const FLOOR_Y = -1.42;

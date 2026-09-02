@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { formatNoteDate } from "@/lib/writing";
+import { formatNoteDate } from "@/lib/writing-format";
 import type { NoteStation } from "@/lib/stations";
 
 type NoteDockProps = {

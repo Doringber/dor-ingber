@@ -2,6 +2,9 @@ import fs from "node:fs";
 import path from "node:path";
 import matter from "gray-matter";
 import type { LocaleText, WritingNote } from "@/lib/types";
+import { formatNoteDate, formatNoteNumber } from "@/lib/writing-format";
+
+export { formatNoteDate, formatNoteNumber };
 
 const WRITING_DIR = path.join(process.cwd(), "content/writing");
 
@@ -65,10 +68,3 @@ export function getWritingIndex(slug: string): number {
   return index === -1 ? 0 : index;
 }
 
-export function formatNoteNumber(index: number): string {
-  return String(index + 1).padStart(2, "0");
-}
-
-export function formatNoteDate(date: string): string {
-  return date.replace(/-/g, ".");
-}
