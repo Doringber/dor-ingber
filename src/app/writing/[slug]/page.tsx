@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import { notFound } from "next/navigation";
 import { ReadProgress } from "@/components/read-progress";
+import { WritingChrome } from "@/components/writing-chrome";
 import {
   formatNoteDate,
   formatNoteNumber,
@@ -41,6 +42,7 @@ export default async function WritingPage({
 
   return (
     <main className="article-shell">
+      <WritingChrome />
       <ReadProgress />
       <article className="article-column" data-article dir="rtl" lang="he">
         <p className="kicker article-kicker">NOTE · {number}</p>

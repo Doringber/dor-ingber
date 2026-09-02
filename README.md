@@ -8,6 +8,7 @@ Personal site for AI films and notes.
 - TypeScript
 - Tailwind CSS
 - File-based content (no CMS)
+- WebGPU spatial volume on `/`, with a still one-plane fallback
 
 Routes: `/` and `/writing/[slug]`.
 
@@ -20,7 +21,7 @@ Loaders in `src/lib`:
 - `getWorks()` / `getWork(slug)`
 - `getWriting()` / `getWritingBySlug(slug)`
 
-The homepage shows the first 3 works (featured first, then year) and the first 2 notes by date descending.
+The homepage is a single spatial volume with five stations: the first 3 works (featured first, then year) and the first 2 notes by date descending. There is no second information architecture.
 
 ### Work JSON
 
@@ -36,7 +37,7 @@ The homepage shows the first 3 works (featured first, then year) and the first 2
 }
 ```
 
-Store `youtubeId` only. Posters use `https://i.ytimg.com/vi/{id}/hqdefault.jpg`. Players load `youtube-nocookie` after click.
+Store `youtubeId` only. Posters use `https://i.ytimg.com/vi/{id}/hqdefault.jpg` (proxied at `/api/poster/[id]` for WebGPU). Players load `youtube-nocookie` after click.
 
 ### Writing MDX
 
@@ -51,6 +52,8 @@ title:
 
 Hebrew-first body.
 ```
+
+Notes dock over the volume on `/`. `/writing/[slug]` remains the article deep link.
 
 ## Develop
 
