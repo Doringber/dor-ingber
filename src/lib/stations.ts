@@ -7,6 +7,8 @@ import {
 } from "@/lib/types";
 import { formatNoteNumber } from "@/lib/writing-format";
 
+export { snapDolly } from "@/lib/swipe";
+
 export const LOOK_CLAMP_RAD = (12 * Math.PI) / 180;
 export const FLOOR_Y = -1.42;
 export const MOBILE_QUERY = "(max-width: 719px)";
@@ -15,6 +17,7 @@ export const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
 export type FilmStation = {
   kind: "film";
   index: number;
+  slug: string;
   youtubeId: string;
   title: LocaleText;
   position: [number, number, number];
@@ -24,6 +27,7 @@ export type FilmStation = {
 export type LinkStation = {
   kind: "game" | "build";
   index: number;
+  slug: string;
   href: string;
   title: LocaleText;
   position: [number, number, number];
@@ -80,6 +84,7 @@ export function buildStations(
       stations.push({
         kind: "film",
         index: stations.length,
+        slug: work.slug,
         youtubeId: work.youtubeId,
         title: work.title,
         position: pose.position,
@@ -93,6 +98,7 @@ export function buildStations(
       stations.push({
         kind: work.kind,
         index: stations.length,
+        slug: work.slug,
         href: work.href,
         title: work.title,
         position: pose.position,
@@ -145,6 +151,15 @@ export function stationKicker(station: SpatialStation): string {
   }
 }
 
-export function snapDolly(value: number, count: number): number {
-  return Math.min(Math.max(count - 1, 0), Math.max(0, Math.round(value)));
+const STILL_POSTERS: Record<string, string> = {
+  findmywatermalon: "/stills/findmywatermalon.jpg",
+  thinkingbreak: "/stills/thinkingbreak.jpg",
+  "vintage-market": "/stills/vintage-market.jpg",
+};
+
+export function stationStillSrc(station: SpatialStation): string | null {
+  if (station.kind !== "game" && station.kind !== "build") {
+    return null;
+  }
+  return STILL_POSTERS[station.slug] ?? null;
 }

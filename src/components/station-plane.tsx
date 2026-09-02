@@ -1,7 +1,14 @@
 "use client";
 
+import type { ReactNode } from "react";
+import Image from "next/image";
 import { YoutubePlayer } from "@/components/youtube-player";
-import { stationKicker, stationLabel, type SpatialStation } from "@/lib/stations";
+import {
+  stationKicker,
+  stationLabel,
+  stationStillSrc,
+  type SpatialStation,
+} from "@/lib/stations";
 
 type StationPlaneProps = {
   station: SpatialStation;
@@ -13,43 +20,86 @@ function GestureLayer() {
   return <span className="plane-gesture" aria-hidden />;
 }
 
+function FilmRebate({
+  children,
+  kicker,
+  note,
+}: {
+  children: ReactNode;
+  kicker?: string;
+  note?: boolean;
+}) {
+  return (
+    <div
+      className={`station-plane fallback-plane film-rebate${note ? " fallback-note" : " fallback-film"}`}
+    >
+      <span className="film-rebate-age" aria-hidden />
+      <span className="film-rebate-sprockets" aria-hidden />
+      <span className="film-rebate-mark" aria-hidden>
+        9 6
+      </span>
+      <div className={`film-window${note ? " is-note" : ""}`}>
+        {children}
+        {kicker ? <span className="kicker plane-kicker">{kicker}</span> : null}
+      </div>
+      <GestureLayer />
+    </div>
+  );
+}
+
+function StillPoster({ src, title }: { src: string; title: string }) {
+  return (
+    <div className="media-frame plane-player">
+      <div className="media-poster">
+        <Image
+          src={src}
+          alt={title}
+          fill
+          sizes="(max-width: 720px) 100vw, 920px"
+          className="media-image"
+        />
+        <span className="grain-thumb" aria-hidden />
+      </div>
+    </div>
+  );
+}
+
 export function StationPlane({ station, resetKey, playing }: StationPlaneProps) {
   if (station.kind === "film") {
     return (
-      <div className="station-plane fallback-plane fallback-film">
+      <FilmRebate kicker={playing ? undefined : "FILM"}>
         <YoutubePlayer
           key={resetKey ?? station.youtubeId}
           youtubeId={station.youtubeId}
           title={stationLabel(station)}
           playing={playing}
         />
-        {playing ? null : <span className="kicker plane-kicker">FILM</span>}
-        <GestureLayer />
-      </div>
+      </FilmRebate>
     );
   }
 
   if (station.kind === "game" || station.kind === "build") {
+    const still = stationStillSrc(station);
     return (
-      <div className="station-plane fallback-plane fallback-film fallback-link">
-        <div className="link-plane">
-          <span className="link-plane-title">{station.title.en}</span>
-          <span className="kicker plane-kicker">{stationKicker(station)}</span>
-          <span className="grain-thumb" aria-hidden />
-        </div>
-        <GestureLayer />
-      </div>
+      <FilmRebate kicker={stationKicker(station)}>
+        {still ? (
+          <StillPoster src={still} title={station.title.en} />
+        ) : (
+          <div className="link-plane plane-player">
+            <span className="link-plane-title">{station.title.en}</span>
+            <span className="grain-thumb" aria-hidden />
+          </div>
+        )}
+      </FilmRebate>
     );
   }
 
   return (
-    <div className="station-plane fallback-plane fallback-note">
+    <FilmRebate kicker="NOTE" note>
       <span className="fallback-note-body" dir="rtl" lang="he">
         {station.title.he}
       </span>
-      <span className="kicker">NOTE</span>
       <span className="grain-thumb" aria-hidden />
-      <GestureLayer />
-    </div>
+    </FilmRebate>
   );
 }

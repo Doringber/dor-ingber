@@ -17,7 +17,7 @@ export function YoutubePlayer({
   playing = false,
 }: YoutubePlayerProps) {
   return (
-    <div className="media-frame">
+    <div className="media-frame plane-player">
       {playing ? (
         <iframe
           className="media-iframe"

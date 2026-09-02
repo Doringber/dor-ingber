@@ -1,6 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type PointerEvent,
+} from "react";
 import { NoteDock } from "@/components/note-dock";
 import { StationPlane } from "@/components/station-plane";
 import { stationAtScreenPoint } from "@/lib/hits";
@@ -12,11 +20,17 @@ import {
   LOOK_CLAMP_RAD,
   MOBILE_QUERY,
   REDUCED_MOTION_QUERY,
-  snapDolly,
   stationKicker,
   type NoteStation,
   type SpatialStation,
 } from "@/lib/stations";
+import {
+  focusedFromDolly,
+  incomingDrag,
+  indexAfterSwipe,
+  shouldCommitSwipe,
+  stepSpring,
+} from "@/lib/swipe";
 
 type SpatialHomeProps = {
   stations: SpatialStation[];
@@ -61,9 +75,7 @@ function getServerHash(): string {
 function isChromeTarget(target: EventTarget | null): boolean {
   return (
     target instanceof Element &&
-    Boolean(
-      target.closest(".note-dock, .spatial-chrome button, .mobile-menu"),
-    )
+    Boolean(target.closest(".note-dock, .spatial-chrome button, .mobile-menu"))
   );
 }
 
@@ -71,6 +83,7 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
   const rootRef = useRef<HTMLElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const worldRef = useRef<HTMLDivElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
   const dollyRef = useRef(0);
   const targetRef = useRef(0);
   const lookRef = useRef({ yaw: 0, pitch: 0 });
@@ -88,7 +101,10 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
   const indexRef = useRef(0);
   const reducedRef = useRef(false);
   const mobileRef = useRef(false);
+  const onePlaneRef = useRef(false);
   const gpuRef = useRef(false);
+  const swipeConsumedRef = useRef(false);
+  const dragRef = useRef({ x: 0, v: 0, target: 0 });
 
   const reducedMotion = useMedia(REDUCED_MOTION_QUERY);
   const mobile = useMedia(MOBILE_QUERY);
@@ -102,8 +118,6 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [playingId, setPlayingId] = useState<number | null>(null);
   const dockSlugRef = useRef<string | null>(null);
-  const swipeLockRef = useRef(0);
-  const touchSwipeRef = useRef({ active: false, x: 0, y: 0 });
 
   const last = Math.max(stations.length - 1, 0);
   const current = stations[index] ?? stations[0];
@@ -128,12 +142,32 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
     (next: number, immediate = false) => {
       const clamped = clamp(next, 0, last);
       targetRef.current = clamped;
-      if (immediate || reducedRef.current) {
+      if (immediate || reducedRef.current || onePlaneRef.current) {
         dollyRef.current = clamped;
       }
+      indexRef.current = clamped;
       setFocusedIndex(clamped);
     },
     [last, setFocusedIndex],
+  );
+
+  const springToStation = useCallback(
+    (next: number, fromDx = 0) => {
+      const clamped = clamp(next, 0, last);
+      if (clamped === indexRef.current) {
+        dragRef.current.target = 0;
+        return;
+      }
+      if (onePlaneRef.current && !reducedRef.current) {
+        dragRef.current.x = fromDx !== 0 ? incomingDrag(fromDx) : incomingDrag(
+          clamped > indexRef.current ? -1 : 1,
+        );
+        dragRef.current.v = 0;
+        dragRef.current.target = 0;
+      }
+      goTo(clamped);
+    },
+    [goTo, last],
   );
 
   const openNote = useCallback((slug: string) => {
@@ -164,70 +198,34 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
     [openHref, openNote, playStation],
   );
 
-  const applyHorizontalSwipe = useCallback((dx: number, dy: number) => {
-    if (Math.abs(dx) <= 40 || Math.abs(dx) < Math.abs(dy)) {
-      return false;
-    }
-    const now = performance.now();
-    if (now - swipeLockRef.current < 350) {
-      return false;
-    }
-    swipeLockRef.current = now;
-    goTo(indexRef.current + (dx < 0 ? 1 : -1));
-    return true;
-  }, [goTo]);
+  const applyHorizontalSwipe = useCallback(
+    (dx: number, dy: number) => {
+      if (swipeConsumedRef.current || !shouldCommitSwipe(dx, dy)) {
+        return false;
+      }
+      const next = indexAfterSwipe(indexRef.current, dx, last);
+      if (next === indexRef.current) {
+        return false;
+      }
+      swipeConsumedRef.current = true;
+      springToStation(next, dx);
+      return true;
+    },
+    [last, springToStation],
+  );
 
   useEffect(() => {
     reducedRef.current = reducedMotion;
     mobileRef.current = mobile;
+    onePlaneRef.current = onePlane;
     gpuRef.current = gpuReady;
     indexRef.current = index;
     targetRef.current = index;
-    dockSlugRef.current = dockSlug;
-  }, [dockSlug, gpuReady, index, mobile, reducedMotion]);
-
-  useEffect(() => {
-    if (!onePlane) {
-      return;
+    if (onePlane) {
+      dollyRef.current = index;
     }
-
-    const onTouchStart = (event: TouchEvent) => {
-      if (dockSlugRef.current || isChromeTarget(event.target)) {
-        return;
-      }
-      const touch = event.touches[0];
-      if (!touch) {
-        return;
-      }
-      touchSwipeRef.current = { active: true, x: touch.clientX, y: touch.clientY };
-    };
-
-    const onTouchEnd = (event: TouchEvent) => {
-      const swipe = touchSwipeRef.current;
-      if (!swipe.active) {
-        return;
-      }
-      swipe.active = false;
-      const touch = event.changedTouches[0];
-      if (!touch) {
-        return;
-      }
-      applyHorizontalSwipe(touch.clientX - swipe.x, touch.clientY - swipe.y);
-    };
-
-    const onTouchCancel = () => {
-      touchSwipeRef.current.active = false;
-    };
-
-    window.addEventListener("touchstart", onTouchStart, { capture: true, passive: true });
-    window.addEventListener("touchend", onTouchEnd, { capture: true });
-    window.addEventListener("touchcancel", onTouchCancel, { capture: true });
-    return () => {
-      window.removeEventListener("touchstart", onTouchStart, true);
-      window.removeEventListener("touchend", onTouchEnd, true);
-      window.removeEventListener("touchcancel", onTouchCancel, true);
-    };
-  }, [applyHorizontalSwipe, onePlane]);
+    dockSlugRef.current = dockSlug;
+  }, [dockSlug, gpuReady, index, mobile, onePlane, reducedMotion]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -257,8 +255,12 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
 
   useEffect(() => {
     let frame = 0;
-    const tick = () => {
+    let lastTime = performance.now();
+    const tick = (now: number) => {
+      const dt = Math.min(0.032, (now - lastTime) / 1000);
+      lastTime = now;
       const reduced = reducedRef.current;
+      const one = onePlaneRef.current;
       if (!reduced) {
         dollyRef.current += (targetRef.current - dollyRef.current) * 0.08;
       } else {
@@ -267,10 +269,33 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
         lookRef.current.pitch = 0;
       }
 
-      const focused = snapDolly(dollyRef.current, stations.length);
+      const focused = focusedFromDolly(
+        dollyRef.current,
+        stations.length,
+        one,
+        indexRef.current,
+      );
       if (focused !== indexRef.current) {
         indexRef.current = focused;
         setFocusedIndex(focused);
+      }
+
+      const drag = dragRef.current;
+      if (!one || reduced) {
+        drag.x = 0;
+        drag.v = 0;
+        drag.target = 0;
+      } else {
+        const next = stepSpring(drag.x, drag.v, drag.target, dt);
+        drag.x = next.pos;
+        drag.v = next.vel;
+      }
+      const stage = stageRef.current;
+      if (stage) {
+        const settle = Math.abs(drag.x) < 0.2 && Math.abs(drag.v) < 2;
+        stage.style.transform = settle
+          ? ""
+          : `translate3d(${drag.x}px, 0, 0)`;
       }
 
       const world = worldRef.current;
@@ -317,15 +342,15 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
         return;
       }
       if (event.key === "ArrowRight" || event.key === "ArrowDown") {
-        goTo(Math.round(targetRef.current) + 1);
+        springToStation(Math.round(targetRef.current) + 1);
       }
       if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
-        goTo(Math.round(targetRef.current) - 1);
+        springToStation(Math.round(targetRef.current) - 1);
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [dockSlug, goTo]);
+  }, [dockSlug, springToStation]);
 
   const updateLook = (clientX: number, clientY: number) => {
     const nx = clientX / window.innerWidth;
@@ -345,7 +370,7 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
     }
   };
 
-  const onPointerDown = (event: React.PointerEvent<HTMLElement>) => {
+  const onPointerDown = (event: PointerEvent<HTMLElement>) => {
     if (dockSlug || isChromeTarget(event.target)) {
       return;
     }
@@ -355,10 +380,11 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
     pointer.startX = event.clientX;
     pointer.startY = event.clientY;
     pointer.startDolly = targetRef.current;
+    swipeConsumedRef.current = false;
     event.currentTarget.setPointerCapture(event.pointerId);
   };
 
-  const onPointerMove = (event: React.PointerEvent<HTMLElement>) => {
+  const onPointerMove = (event: PointerEvent<HTMLElement>) => {
     const touchLike = event.pointerType === "touch" || mobileRef.current || onePlane;
     if (!touchLike) {
       updateLook(event.clientX, event.clientY);
@@ -372,13 +398,23 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
     if (Math.hypot(dx, dy) > 8) {
       pointer.dragging = true;
     }
-    if (!pointer.dragging || touchLike) {
+    if (!pointer.dragging) {
+      return;
+    }
+    if (onePlaneRef.current) {
+      const atStart = indexRef.current <= 0 && dx > 0;
+      const atEnd = indexRef.current >= last && dx < 0;
+      const resist = atStart || atEnd ? 0.22 : 0.82;
+      dragRef.current.target = dx * resist;
+      return;
+    }
+    if (touchLike) {
       return;
     }
     targetRef.current = clamp(pointer.startDolly + dy / 260, 0, last);
   };
 
-  const onPointerUp = (event: React.PointerEvent<HTMLElement>) => {
+  const onPointerUp = (event: PointerEvent<HTMLElement>) => {
     const pointer = pointerRef.current;
     const dx = event.clientX - pointer.startX;
     const dy = event.clientY - pointer.startY;
@@ -391,7 +427,11 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
       return;
     }
 
-    if (onePlane && wasDragging && applyHorizontalSwipe(dx, dy)) {
+    if (onePlane && wasDragging) {
+      if (applyHorizontalSwipe(dx, dy)) {
+        return;
+      }
+      dragRef.current.target = 0;
       return;
     }
 
@@ -421,7 +461,7 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
       return;
     }
     if (hit !== index) {
-      goTo(hit);
+      springToStation(hit);
       return;
     }
     activate(station);
@@ -474,6 +514,7 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
       {!showVolumeStations && current ? (
         <div className="fallback-stage">
           <div
+            ref={stageRef}
             data-station={current.index}
             className={`fallback-measure${current.kind === "note" ? " is-note" : ""}`}
           >
@@ -538,7 +579,7 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
               aria-label="Previous station"
               onClick={(event) => {
                 event.stopPropagation();
-                goTo(index - 1);
+                springToStation(index - 1);
               }}
             >
               ←
@@ -550,7 +591,7 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
               aria-label="Next station"
               onClick={(event) => {
                 event.stopPropagation();
-                goTo(index + 1);
+                springToStation(index + 1);
               }}
             >
               →
