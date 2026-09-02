@@ -125,8 +125,8 @@ button {
 }
 
 .spatial-root {
-  --plane-focus-w: min(78vw, 1280px);
-  --plane-neighbor-w: 42vw;
+  --plane-focus-w: min(56vw, 960px);
+  --plane-neighbor-w: 28vw;
   --plane-note-w: min(36vw, 480px);
   position: fixed;
   inset: 0;
@@ -321,12 +321,14 @@ button {
   pointer-events: auto;
   min-width: 44px;
   min-height: 44px;
+  opacity: 0.52;
 }
 
 .volume-station.is-focused {
   z-index: 2;
   width: var(--plane-focus-w);
   height: calc(var(--plane-focus-w) * 9 / 16);
+  opacity: 1;
 }
 
 .volume-station.is-note,
@@ -769,7 +771,7 @@ iframe[title*="Netlify"] {
   }
 
   .fallback-film {
-    width: min(78vw, 1280px);
+    width: min(56vw, 960px);
   }
 
   .fallback-note {

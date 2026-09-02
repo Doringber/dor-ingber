@@ -16,7 +16,13 @@ import { noteFromPath, writingPath } from "@/lib/note-reader";
 import { hasWebGPU } from "@/lib/gpu/detect";
 import { clamp } from "@/lib/gpu/math";
 import { startVolume } from "@/lib/gpu/volume";
-import { stationFrame, stationWorldZ, VOLUME_LIFT_PX } from "@/lib/scale";
+import {
+  focusOpacity,
+  stationFrame,
+  stationSize,
+  stationWorldZ,
+  VOLUME_LIFT_PX,
+} from "@/lib/scale";
 import {
   firstNoteIndex,
   LOOK_CLAMP_RAD,
@@ -148,7 +154,14 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
     [index, stations, viewportWidth],
   );
   const framesRef = useRef(frames);
-  framesRef.current = frames;
+  const viewportWidthRef = useRef(viewportWidth);
+  const stationsRef = useRef(stations);
+
+  useEffect(() => {
+    framesRef.current = frames;
+    viewportWidthRef.current = viewportWidth;
+    stationsRef.current = stations;
+  }, [frames, stations, viewportWidth]);
 
   const setFocusedIndex = useCallback((next: number) => {
     setUserIndex(next);
@@ -323,14 +336,24 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
         const pitch = (lookRef.current.pitch * 180) / Math.PI;
         world.style.transform = `rotateX(${pitch}deg) rotateY(${yaw}deg) translate3d(0px, ${VOLUME_LIFT_PX}px, 0px)`;
         const dolly = dollyRef.current;
+        const viewport = viewportWidthRef.current;
         for (const node of world.querySelectorAll<HTMLElement>("[data-station]")) {
           const stationIndex = Number(node.dataset.station);
           const frame = framesRef.current[stationIndex];
-          if (!frame || !Number.isFinite(stationIndex)) {
+          const station = stationsRef.current[stationIndex];
+          if (!frame || !station || !Number.isFinite(stationIndex)) {
             continue;
           }
-          node.style.width = `${frame.width}px`;
-          node.style.height = `${frame.height}px`;
+          const sized = stationSize(
+            viewport,
+            stationIndex,
+            dolly,
+            station.kind === "note",
+          );
+          node.style.width = `${sized.width}px`;
+          node.style.height = `${sized.height}px`;
+          node.style.opacity = String(focusOpacity(sized.focus));
+          node.style.zIndex = String(Math.round(1 + sized.focus * 10));
           node.style.transform = `translate3d(${frame.x}px, ${frame.y}px, ${stationWorldZ(stationIndex, dolly)}px) translate(-50%, -50%)`;
         }
       }
@@ -532,8 +555,6 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
                   data-station={station.index}
                   className={`volume-station${station.index === index ? " is-focused" : ""}${station.kind === "note" ? " is-note" : ""}`}
                   style={{
-                    width: frame.width,
-                    height: frame.height,
                     transform: `translate3d(${frame.x}px, ${frame.y}px, ${frame.z}px) translate(-50%, -50%)`,
                   }}
                 >
