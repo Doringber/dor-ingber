@@ -1,17 +1,17 @@
 "use client";
 
+import { usePathname, useRouter } from "next/navigation";
 import {
   useCallback,
   useEffect,
-  useMemo,
   useRef,
   useState,
   useSyncExternalStore,
   type PointerEvent,
 } from "react";
-import { NoteDock } from "@/components/note-dock";
 import { StationPlane } from "@/components/station-plane";
 import { stationAtScreenPoint } from "@/lib/hits";
+import { noteFromPath, writingPath } from "@/lib/note-reader";
 import { hasWebGPU } from "@/lib/gpu/detect";
 import { clamp } from "@/lib/gpu/math";
 import { startVolume } from "@/lib/gpu/volume";
@@ -21,7 +21,6 @@ import {
   MOBILE_QUERY,
   REDUCED_MOTION_QUERY,
   stationKicker,
-  type NoteStation,
   type SpatialStation,
 } from "@/lib/stations";
 import {
@@ -75,7 +74,7 @@ function getServerHash(): string {
 function isChromeTarget(target: EventTarget | null): boolean {
   return (
     target instanceof Element &&
-    Boolean(target.closest(".note-dock, .spatial-chrome button, .mobile-menu"))
+    Boolean(target.closest(".note-reader, .spatial-chrome button, .mobile-menu"))
   );
 }
 
@@ -106,6 +105,9 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
   const swipeConsumedRef = useRef(false);
   const dragRef = useRef({ x: 0, v: 0, target: 0 });
 
+  const router = useRouter();
+  const pathname = usePathname();
+  const readerOpen = noteFromPath(pathname) !== null;
   const reducedMotion = useMedia(REDUCED_MOTION_QUERY);
   const mobile = useMedia(MOBILE_QUERY);
   const hash = useSyncExternalStore(subscribeHash, getHash, getServerHash);
@@ -114,21 +116,11 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
   const [gpuTried, setGpuTried] = useState(false);
   const [userIndex, setUserIndex] = useState<number | null>(null);
   const index = userIndex ?? hashIndex;
-  const [dockSlug, setDockSlug] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [playingId, setPlayingId] = useState<number | null>(null);
-  const dockSlugRef = useRef<string | null>(null);
 
   const last = Math.max(stations.length - 1, 0);
   const current = stations[index] ?? stations[0];
-  const dockNote = useMemo(
-    () =>
-      stations.find(
-        (station): station is NoteStation =>
-          station.kind === "note" && station.slug === dockSlug,
-      ) ?? null,
-    [dockSlug, stations],
-  );
   const frozen = reducedMotion || (gpuTried && !gpuReady);
   const onePlane = mobile || frozen;
   const showVolumeStations = gpuReady && !onePlane;
@@ -170,10 +162,13 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
     [goTo, last],
   );
 
-  const openNote = useCallback((slug: string) => {
-    setDockSlug(slug);
-    setMenuOpen(false);
-  }, []);
+  const openNote = useCallback(
+    (slug: string) => {
+      setMenuOpen(false);
+      router.push(writingPath(slug));
+    },
+    [router],
+  );
 
   const playStation = useCallback((stationIndex: number) => {
     setPlayingId(stationIndex);
@@ -224,8 +219,7 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
     if (onePlane) {
       dollyRef.current = index;
     }
-    dockSlugRef.current = dockSlug;
-  }, [dockSlug, gpuReady, index, mobile, onePlane, reducedMotion]);
+  }, [gpuReady, index, mobile, onePlane, reducedMotion]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -320,7 +314,7 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
     }
 
     const onWheel = (event: WheelEvent) => {
-      if (dockSlug) {
+      if (readerOpen) {
         return;
       }
       event.preventDefault();
@@ -329,16 +323,18 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
 
     window.addEventListener("wheel", onWheel, { passive: false });
     return () => window.removeEventListener("wheel", onWheel);
-  }, [dockSlug, frozen, last]);
+  }, [frozen, last, readerOpen]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        setDockSlug(null);
         setMenuOpen(false);
+        if (readerOpen) {
+          router.push("/");
+        }
         return;
       }
-      if (dockSlug) {
+      if (readerOpen) {
         return;
       }
       if (event.key === "ArrowRight" || event.key === "ArrowDown") {
@@ -350,7 +346,7 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [dockSlug, springToStation]);
+  }, [readerOpen, router, springToStation]);
 
   const updateLook = (clientX: number, clientY: number) => {
     const nx = clientX / window.innerWidth;
@@ -371,7 +367,7 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
   };
 
   const onPointerDown = (event: PointerEvent<HTMLElement>) => {
-    if (dockSlug || isChromeTarget(event.target)) {
+    if (readerOpen || isChromeTarget(event.target)) {
       return;
     }
     const pointer = pointerRef.current;
@@ -390,7 +386,7 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
       updateLook(event.clientX, event.clientY);
     }
     const pointer = pointerRef.current;
-    if (!pointer.down || dockSlug) {
+    if (!pointer.down || readerOpen) {
       return;
     }
     const dx = event.clientX - pointer.startX;
@@ -423,7 +419,7 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
     pointer.down = false;
     pointer.dragging = false;
 
-    if (dockSlug || !wasDown) {
+    if (readerOpen || !wasDown) {
       return;
     }
 
@@ -469,16 +465,19 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
 
   const navTo = (nextHash: "#work" | "#writing") => {
     setMenuOpen(false);
-    setDockSlug(null);
     setUserIndex(null);
-    window.location.hash = nextHash;
+    if (readerOpen) {
+      router.push(`/${nextHash}`);
+    } else {
+      window.location.hash = nextHash;
+    }
     goTo(indexFromHash(stations, nextHash), true);
   };
 
   return (
     <main
       ref={rootRef}
-      className={`spatial-root${onePlane ? " is-one-plane" : ""}${gpuReady ? " is-gpu" : " is-fallback"}`}
+      className={`spatial-root${onePlane ? " is-one-plane" : ""}${gpuReady ? " is-gpu" : " is-fallback"}${readerOpen ? " is-reading" : ""}`}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
@@ -609,7 +608,6 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
         </div>
       </div>
 
-      {dockNote ? <NoteDock note={dockNote} onClose={() => setDockSlug(null)} /> : null}
     </main>
   );
 }

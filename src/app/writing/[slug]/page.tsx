@@ -1,15 +1,8 @@
 import type { Metadata } from "next";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import { notFound } from "next/navigation";
-import { ReadProgress } from "@/components/read-progress";
-import { WritingChrome } from "@/components/writing-chrome";
-import {
-  formatNoteDate,
-  formatNoteNumber,
-  getWriting,
-  getWritingBySlug,
-  getWritingIndex,
-} from "@/lib/writing";
+import { NoteReader } from "@/components/note-reader";
+import { formatNoteNumber, getWriting, getWritingBySlug, getWritingIndex } from "@/lib/writing";
 
 export function generateStaticParams() {
   return getWriting().map((note) => ({ slug: note.slug }));
@@ -38,23 +31,17 @@ export default async function WritingPage({
     notFound();
   }
 
+  const notes = getWriting();
   const number = formatNoteNumber(getWritingIndex(note.slug));
 
   return (
-    <main className="article-shell">
-      <WritingChrome />
-      <ReadProgress />
-      <article className="article-column" data-article dir="rtl" lang="he">
-        <p className="kicker article-kicker">NOTE · {number}</p>
-        <h1 className="article-title">{note.title.he}</h1>
-        <p className="article-title-en" dir="ltr" lang="en">
-          {note.title.en}
-        </p>
-        <p className="meta article-date">{formatNoteDate(note.date)}</p>
-        <div className="article-body">
-          <MDXRemote source={note.content} />
-        </div>
-      </article>
-    </main>
+    <NoteReader
+      slug={note.slug}
+      slugs={notes.map((item) => item.slug)}
+      number={number}
+      title={note.title.he}
+    >
+      <MDXRemote source={note.content} />
+    </NoteReader>
   );
 }

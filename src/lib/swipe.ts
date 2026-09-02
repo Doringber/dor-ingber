@@ -16,6 +16,14 @@ export function shouldCommitSwipe(
   return Math.abs(dx) > threshold && Math.abs(dx) >= Math.abs(dy);
 }
 
+export function shouldCloseDown(
+  dx: number,
+  dy: number,
+  threshold = SWIPE_PX,
+): boolean {
+  return dy > threshold && dy >= Math.abs(dx);
+}
+
 export function indexAfterSwipe(index: number, dx: number, last: number): number {
   return clampIndex(index + (dx < 0 ? 1 : -1), last);
 }

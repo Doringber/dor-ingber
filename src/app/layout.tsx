@@ -1,7 +1,17 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Heebo, Instrument_Serif } from "next/font/google";
+import {
+  Frank_Ruhl_Libre,
+  Geist,
+  Geist_Mono,
+  Heebo,
+  Instrument_Serif,
+} from "next/font/google";
 import { Grain } from "@/components/grain";
 import { KillOverlays } from "@/components/kill-overlays";
+import { SpatialHome } from "@/components/spatial-home";
+import { buildStations } from "@/lib/stations";
+import { getWorks } from "@/lib/works";
+import { getWriting } from "@/lib/writing";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -29,6 +39,13 @@ const heebo = Heebo({
   display: "swap",
 });
 
+const frankRuhl = Frank_Ruhl_Libre({
+  subsets: ["hebrew", "latin"],
+  weight: ["400", "700"],
+  variable: "--font-frank",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: {
     default: "Dor Ingber",
@@ -38,14 +55,17 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
+  const stations = buildStations(getWorks(), getWriting());
+
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${instrument.variable} ${heebo.variable}`}
+      className={`${geistSans.variable} ${geistMono.variable} ${instrument.variable} ${heebo.variable} ${frankRuhl.variable}`}
     >
       <body>
         <Grain />
         <KillOverlays />
+        <SpatialHome stations={stations} />
         {children}
       </body>
     </html>
