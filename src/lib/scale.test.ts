@@ -2,15 +2,23 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   FILM_PLANE_ASPECT,
+  FOCUS_LIGHT,
   FOCUS_OPACITY,
   FOCUS_WIDTH_MAX,
   FOCUS_WIDTH_VW,
   FOCUS_Z_PX,
+  NEIGHBOR_LIGHT,
   NEIGHBOR_OPACITY,
   NEIGHBOR_WIDTH_VW,
+  NOTE_INK,
+  NOTE_READER,
+  NOTE_SLAB,
+  VOLUME_BG,
+  VOLUME_LIFT_PX,
   Z_STEP_PX,
   featuredStampWidth,
   focusAmount,
+  focusLight,
   focusOpacity,
   focusPlaneWidth,
   neighborPlaneWidth,
@@ -20,6 +28,7 @@ import {
   planeWidthAtFocus,
   stampWidth,
   stationFrame,
+  stationLightStyle,
   stationSize,
   stationWorldZ,
   wideHeight,
@@ -185,8 +194,35 @@ test("resting stations do not all share the hero width", () => {
 });
 
 test("neighbors stay quieter than the focused plane", () => {
+  assert.equal(NEIGHBOR_OPACITY, 0.55);
+  assert.equal(NEIGHBOR_LIGHT, 0.55);
   assert.equal(focusOpacity(1), FOCUS_OPACITY);
   assert.equal(focusOpacity(0), NEIGHBOR_OPACITY);
   assert.ok(focusOpacity(0) < focusOpacity(0.5));
   assert.ok(focusOpacity(0.5) < focusOpacity(1));
+});
+
+test("focus lerps light with scale, not as a step at the focused index", () => {
+  assert.equal(focusLight(1), FOCUS_LIGHT);
+  assert.equal(focusLight(0), NEIGHBOR_LIGHT);
+  assert.equal(focusLight(0.5), NEIGHBOR_LIGHT + (FOCUS_LIGHT - NEIGHBOR_LIGHT) * 0.5);
+  assert.ok(focusLight(0.25) < focusLight(0.75));
+  assert.equal(stationLightStyle(0).opacity, NEIGHBOR_OPACITY);
+  assert.equal(stationLightStyle(0).brightness, NEIGHBOR_LIGHT);
+  assert.equal(stationLightStyle(1).opacity, FOCUS_OPACITY);
+  assert.equal(stationLightStyle(1).brightness, FOCUS_LIGHT);
+  assert.ok(stationLightStyle(0.35).brightness > NEIGHBOR_LIGHT);
+  assert.ok(stationLightStyle(0.35).brightness < FOCUS_LIGHT);
+});
+
+test("volume lock is warm dark, kraft notes, no black slabs", () => {
+  assert.equal(VOLUME_BG, "#1C1612");
+  assert.notEqual(VOLUME_BG, "#050507");
+  assert.notEqual(VOLUME_BG, "#000000");
+  assert.equal(NOTE_SLAB, "#C4A06A");
+  assert.equal(NOTE_READER, "#D4B48A");
+  assert.equal(NOTE_INK, "#2C2118");
+  assert.notEqual(NOTE_SLAB, "#0a0a0c");
+  assert.notEqual(NOTE_READER, "#111113");
+  assert.equal(VOLUME_LIFT_PX, 36);
 });

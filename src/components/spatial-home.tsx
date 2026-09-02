@@ -17,8 +17,8 @@ import { hasWebGPU } from "@/lib/gpu/detect";
 import { clamp } from "@/lib/gpu/math";
 import { startVolume } from "@/lib/gpu/volume";
 import {
-  focusOpacity,
   stationFrame,
+  stationLightStyle,
   stationSize,
   stationWorldZ,
   VOLUME_LIFT_PX,
@@ -356,10 +356,13 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
             dolly,
             station.kind === "note",
           );
+          const light = stationLightStyle(sized.focus);
           node.style.setProperty("--station-focus", String(sized.focus));
+          node.style.setProperty("--station-light", String(light.brightness));
           node.style.width = `${sized.width}px`;
           node.style.height = `${sized.height}px`;
-          node.style.opacity = String(focusOpacity(sized.focus));
+          node.style.opacity = String(light.opacity);
+          node.style.filter = `brightness(${light.brightness})`;
           node.style.zIndex = String(Math.round(1 + sized.focus * 10));
           node.style.transform = `translate3d(${frame.x}px, ${frame.y}px, ${stationWorldZ(stationIndex, dolly)}px) translate(-50%, -50%)`;
           node.dataset.focus = sized.focus.toFixed(3);
@@ -567,6 +570,8 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
                   className={`volume-station${station.index === index ? " is-focused" : ""}${station.kind === "note" ? " is-note" : ""}`}
                   style={{
                     transform: `translate3d(${frame.x}px, ${frame.y}px, 0px) translate(-50%, -50%)`,
+                    ["--station-light" as string]:
+                      station.index === index ? "1" : "0.55",
                   }}
                 >
                   <StationPlane

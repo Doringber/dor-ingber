@@ -24,16 +24,18 @@ function FilmRebate({
   children,
   kicker,
   note,
+  tone,
   slug,
 }: {
   children: ReactNode;
   kicker?: string;
   note?: boolean;
+  tone?: boolean;
   slug: string;
 }) {
   return (
     <div
-      className={`station-plane fallback-plane film-rebate${note ? " fallback-note" : " fallback-film"}`}
+      className={`station-plane fallback-plane film-rebate${note ? " fallback-note" : " fallback-film"}${tone ? " is-tone" : ""}`}
       data-slug={slug}
       data-kicker={kicker ?? ""}
     >
@@ -51,7 +53,15 @@ function FilmRebate({
   );
 }
 
-function StillPoster({ src, title }: { src: string; title: string }) {
+function StillPoster({
+  src,
+  title,
+  tone,
+}: {
+  src: string;
+  title: string;
+  tone?: boolean;
+}) {
   return (
     <div className="media-frame plane-player">
       <div className="media-poster">
@@ -60,7 +70,7 @@ function StillPoster({ src, title }: { src: string; title: string }) {
           alt={title}
           fill
           sizes="(max-width: 720px) 100vw, min(56vw, 960px)"
-          className="media-image"
+          className={`media-image${tone ? " is-tone" : ""}`}
         />
         <span className="grain-thumb" aria-hidden />
       </div>
@@ -87,11 +97,11 @@ export function StationPlane({ station, resetKey, playing }: StationPlaneProps) 
   if (station.kind === "game" || station.kind === "build") {
     const still = stationStillSrc(station);
     return (
-      <FilmRebate slug={station.slug} kicker={kicker}>
+      <FilmRebate slug={station.slug} kicker={kicker} tone>
         {still ? (
-          <StillPoster src={still} title={station.title.en} />
+          <StillPoster src={still} title={station.title.en} tone />
         ) : (
-          <div className="link-plane plane-player">
+          <div className="link-plane plane-player is-tone">
             <span className="link-plane-title">{station.title.en}</span>
             <span className="grain-thumb" aria-hidden />
           </div>
