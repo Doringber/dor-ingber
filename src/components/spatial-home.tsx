@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
-import { HitLayer } from "@/components/hit-layer";
 import { NoteDock } from "@/components/note-dock";
 import { StationPlane } from "@/components/station-plane";
 import { hasWebGPU } from "@/lib/gpu/detect";
@@ -13,6 +12,7 @@ import {
   MOBILE_QUERY,
   REDUCED_MOTION_QUERY,
   snapDolly,
+  stationKicker,
   type NoteStation,
   type SpatialStation,
 } from "@/lib/stations";
@@ -72,7 +72,6 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
   const rootRef = useRef<HTMLElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const worldRef = useRef<HTMLDivElement>(null);
-  const ignoreTapRef = useRef(false);
   const dollyRef = useRef(0);
   const targetRef = useRef(0);
   const lookRef = useRef({ yaw: 0, pitch: 0 });
@@ -103,7 +102,6 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
   const [dockSlug, setDockSlug] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [playingId, setPlayingId] = useState<number | null>(null);
-  const [rootNode, setRootNode] = useState<HTMLElement | null>(null);
   const dockSlugRef = useRef<string | null>(null);
   const swipeLockRef = useRef(0);
   const touchSwipeRef = useRef({ active: false, x: 0, y: 0 });
@@ -148,14 +146,24 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
     setPlayingId(stationIndex);
   }, []);
 
-  const shouldIgnoreTap = useCallback(() => ignoreTapRef.current, []);
+  const openHref = useCallback((href: string) => {
+    window.location.assign(href);
+  }, []);
 
-  const markSwipe = () => {
-    ignoreTapRef.current = true;
-    window.setTimeout(() => {
-      ignoreTapRef.current = false;
-    }, 50);
-  };
+  const activate = useCallback(
+    (station: SpatialStation) => {
+      if (station.kind === "film") {
+        playStation(station.index);
+        return;
+      }
+      if (station.kind === "note") {
+        openNote(station.slug);
+        return;
+      }
+      openHref(station.href);
+    },
+    [openHref, openNote, playStation],
+  );
 
   const applyHorizontalSwipe = useCallback((dx: number, dy: number) => {
     if (Math.abs(dx) <= 40 || Math.abs(dx) < Math.abs(dy)) {
@@ -166,14 +174,9 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
       return false;
     }
     swipeLockRef.current = now;
-    markSwipe();
     goTo(indexRef.current + (dx < 0 ? 1 : -1));
     return true;
   }, [goTo]);
-
-  useEffect(() => {
-    setRootNode(rootRef.current);
-  }, []);
 
   useEffect(() => {
     reducedRef.current = reducedMotion;
@@ -394,7 +397,6 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
     }
 
     if (wasDragging) {
-      markSwipe();
       goTo(Math.round(targetRef.current));
       return;
     }
@@ -403,14 +405,21 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
       return;
     }
 
-    if (
-      onePlane &&
-      current?.kind === "note" &&
-      event.target instanceof Element &&
-      event.target.closest("[data-station]")
-    ) {
-      openNote(current.slug);
+    const stationNode =
+      event.target instanceof Element ? event.target.closest("[data-station]") : null;
+    if (!(stationNode instanceof HTMLElement)) {
+      return;
     }
+    const hit = Number(stationNode.dataset.station);
+    const station = stations.find((item) => item.index === hit);
+    if (!station) {
+      return;
+    }
+    if (hit !== index) {
+      goTo(hit);
+      return;
+    }
+    activate(station);
   };
 
   const navTo = (nextHash: "#work" | "#writing") => {
@@ -450,7 +459,6 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
                   station={station}
                   resetKey={`${station.kind}-${station.index}-${station.index === index}`}
                   playing={playingId === station.index}
-                  onPlay={() => playStation(station.index)}
                 />
               </div>
             ))}
@@ -468,23 +476,10 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
               station={current}
               resetKey={`${current.kind}-${current.index}`}
               playing={playingId === current.index}
-              onPlay={() => playStation(current.index)}
             />
           </div>
         </div>
       ) : null}
-
-      <HitLayer
-        root={rootNode}
-        stations={stations}
-        focused={index}
-        playingId={playingId}
-        volume={showVolumeStations}
-        shouldIgnoreTap={shouldIgnoreTap}
-        onPlay={playStation}
-        onOpenNote={openNote}
-        onGoTo={goTo}
-      />
 
       <div className="spatial-chrome">
         <div className="spatial-brand">
@@ -559,9 +554,7 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
         </div>
 
         <div className="mobile-kicker mobile-only">
-          <p className="kicker">
-            {current?.kind === "note" ? `NOTE · ${current.noteNumber}` : "NOTE"}
-          </p>
+          <p className="kicker">{current ? stationKicker(current) : "FILM"}</p>
           <p>
             This site explores spatial stories
             <br />

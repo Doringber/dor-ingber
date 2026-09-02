@@ -1,37 +1,21 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
 import { youtubeEmbedSrc, youtubePoster } from "@/lib/youtube";
 
 type YoutubePlayerProps = {
   youtubeId: string;
   title: string;
   heavyGrain?: boolean;
-  autoPlay?: boolean;
   playing?: boolean;
-  onPlay?: () => void;
 };
 
 export function YoutubePlayer({
   youtubeId,
   title,
   heavyGrain = true,
-  autoPlay = false,
-  playing: playingProp,
-  onPlay,
+  playing = false,
 }: YoutubePlayerProps) {
-  const [internalPlaying, setInternalPlaying] = useState(autoPlay);
-  const playing = playingProp ?? internalPlaying;
-
-  const play = () => {
-    if (onPlay) {
-      onPlay();
-      return;
-    }
-    setInternalPlaying(true);
-  };
-
   return (
     <div className="media-frame">
       {playing ? (
@@ -57,14 +41,6 @@ export function YoutubePlayer({
           />
           {heavyGrain ? <span className="grain-thumb" aria-hidden /> : null}
           <span className="media-wash" aria-hidden />
-          {onPlay ? null : (
-            <button
-              type="button"
-              className="media-play-fallback tap"
-              onClick={play}
-              aria-label={`Play ${title}`}
-            />
-          )}
         </div>
       )}
     </div>

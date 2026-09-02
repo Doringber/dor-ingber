@@ -1,0 +1,16 @@
+{
+  "slug": "thinkingbreak",
+  "kind": "game",
+  "href": "https://doringber.github.io/thinkingbreak",
+  "repo": "https://github.com/Doringber/thinkingbreak",
+  "year": 2026,
+  "kicker": "GAME",
+  "title": {
+    "he": "הפסקת חשיבה",
+    "en": "Thinking Break"
+  },
+  "summary": {
+    "he": "שוטר זירה שרץ בזמן שהסוכן עובד ונעצר כשהוא מסיים.",
+    "en": "Arena shooter that plays while your coding agent works, pauses when it finishes."
+  }
+}
