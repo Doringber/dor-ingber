@@ -8,14 +8,16 @@ type YoutubePlayerProps = {
   youtubeId: string;
   title: string;
   heavyGrain?: boolean;
+  autoPlay?: boolean;
 };
 
 export function YoutubePlayer({
   youtubeId,
   title,
   heavyGrain = true,
+  autoPlay = false,
 }: YoutubePlayerProps) {
-  const [playing, setPlaying] = useState(false);
+  const [playing, setPlaying] = useState(autoPlay);
 
   return (
     <div className="media-frame">

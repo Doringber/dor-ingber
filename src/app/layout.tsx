@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Heebo, Instrument_Serif } from "next/font/google";
 import { Grain } from "@/components/grain";
-import { Header } from "@/components/header";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -40,12 +39,11 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
-      lang="he"
+      lang="en"
       className={`${geistSans.variable} ${geistMono.variable} ${instrument.variable} ${heebo.variable}`}
     >
       <body>
         <Grain />
-        <Header />
         {children}
       </body>
     </html>
