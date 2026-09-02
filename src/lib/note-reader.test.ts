@@ -24,10 +24,14 @@ test("note path helpers stay on /writing/[slug]", () => {
   assert.equal(noteFromPath("/"), null);
 });
 
-test("adjacent slugs walk the two notes and stop at the ends", () => {
-  const slugs = ["lockdown-cat", "anomaly-line"] as const;
-  assert.deepEqual(adjacentNoteSlugs(slugs, "lockdown-cat"), {
+test("adjacent slugs walk the notes and stop at the ends", () => {
+  const slugs = ["yossi-lo-levad", "lockdown-cat", "anomaly-line"] as const;
+  assert.deepEqual(adjacentNoteSlugs(slugs, "yossi-lo-levad"), {
     prev: null,
+    next: "lockdown-cat",
+  });
+  assert.deepEqual(adjacentNoteSlugs(slugs, "lockdown-cat"), {
+    prev: "yossi-lo-levad",
     next: "anomaly-line",
   });
   assert.deepEqual(adjacentNoteSlugs(slugs, "anomaly-line"), {
@@ -41,10 +45,11 @@ test("adjacent slugs walk the two notes and stop at the ends", () => {
 });
 
 test("horizontal swipe moves between notes and snaps at the ends", () => {
-  const slugs = ["lockdown-cat", "anomaly-line"] as const;
+  const slugs = ["yossi-lo-levad", "lockdown-cat", "anomaly-line"] as const;
   assert.equal(shouldCommitSwipe(-41, 10), true);
+  assert.equal(slugAfterNoteSwipe("yossi-lo-levad", slugs, -50), "lockdown-cat");
   assert.equal(slugAfterNoteSwipe("lockdown-cat", slugs, -50), "anomaly-line");
-  assert.equal(slugAfterNoteSwipe("lockdown-cat", slugs, 50), null);
+  assert.equal(slugAfterNoteSwipe("yossi-lo-levad", slugs, 50), null);
   assert.equal(slugAfterNoteSwipe("anomaly-line", slugs, 50), "lockdown-cat");
   assert.equal(slugAfterNoteSwipe("anomaly-line", slugs, -50), null);
 });

@@ -21,7 +21,7 @@ Loaders in `src/lib`:
 - `getWorks()` / `getWork(slug)`
 - `getWriting()` / `getWritingBySlug(slug)`
 
-The homepage is a single spatial volume with eight stations in Z: three films, then findmywatermalon (GAME), thinkingbreak (GAME), vintage-market (BUILD), then the two notes. There is no second information architecture.
+The homepage is a single spatial volume: three films, then findmywatermalon (GAME), thinkingbreak (GAME), vintage-market (BUILD), then the notes. There is no second information architecture.
 
 ### Work JSON
 
@@ -70,7 +70,7 @@ title:
 Hebrew-first body.
 ```
 
-Tapping a note slab opens `/writing/[slug]` as a full-bleed paper over the volume. Close, swipe down, or הקודם / הבא to move between the two notes.
+Tapping a note slab opens `/writing/[slug]` as a full-bleed paper over the volume. Close, swipe down, or הקודם / הבא to move between notes.
 
 ## Develop
 
