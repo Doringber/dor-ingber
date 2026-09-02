@@ -24,14 +24,18 @@ function FilmRebate({
   children,
   kicker,
   note,
+  slug,
 }: {
   children: ReactNode;
   kicker?: string;
   note?: boolean;
+  slug: string;
 }) {
   return (
     <div
       className={`station-plane fallback-plane film-rebate${note ? " fallback-note" : " fallback-film"}`}
+      data-slug={slug}
+      data-kicker={kicker ?? ""}
     >
       <span className="film-rebate-age" aria-hidden />
       <span className="film-rebate-sprockets" aria-hidden />
@@ -65,9 +69,11 @@ function StillPoster({ src, title }: { src: string; title: string }) {
 }
 
 export function StationPlane({ station, resetKey, playing }: StationPlaneProps) {
+  const kicker = playing && station.kind === "film" ? undefined : stationKicker(station);
+
   if (station.kind === "film") {
     return (
-      <FilmRebate kicker={playing ? undefined : "FILM"}>
+      <FilmRebate slug={station.slug} kicker={kicker}>
         <YoutubePlayer
           key={resetKey ?? station.youtubeId}
           youtubeId={station.youtubeId}
@@ -81,7 +87,7 @@ export function StationPlane({ station, resetKey, playing }: StationPlaneProps) 
   if (station.kind === "game" || station.kind === "build") {
     const still = stationStillSrc(station);
     return (
-      <FilmRebate kicker={stationKicker(station)}>
+      <FilmRebate slug={station.slug} kicker={kicker}>
         {still ? (
           <StillPoster src={still} title={station.title.en} />
         ) : (
@@ -95,7 +101,7 @@ export function StationPlane({ station, resetKey, playing }: StationPlaneProps) 
   }
 
   return (
-    <FilmRebate kicker="NOTE" note>
+    <FilmRebate slug={station.slug} kicker={kicker} note>
       <span className="fallback-note-body" dir="rtl" lang="he">
         {station.title.he}
       </span>

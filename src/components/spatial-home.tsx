@@ -553,6 +553,9 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
                 <div
                   key={`${station.kind}-${station.index}`}
                   data-station={station.index}
+                  data-slug={station.slug}
+                  data-kicker={stationKicker(station)}
+                  data-kind={station.kind}
                   className={`volume-station${station.index === index ? " is-focused" : ""}${station.kind === "note" ? " is-note" : ""}`}
                   style={{
                     transform: `translate3d(${frame.x}px, ${frame.y}px, ${frame.z}px) translate(-50%, -50%)`,
@@ -575,6 +578,9 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
           <div
             ref={stageRef}
             data-station={current.index}
+            data-slug={current.slug}
+            data-kicker={stationKicker(current)}
+            data-kind={current.kind}
             className={`fallback-measure${current.kind === "note" ? " is-note" : ""}`}
           >
             <StationPlane
