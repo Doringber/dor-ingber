@@ -5,6 +5,7 @@ import {
   incomingDrag,
   indexAfterSwipe,
   jumpDolly,
+  shouldCloseDown,
   shouldCommitSwipe,
   snapDolly,
   stepSpring,
@@ -15,6 +16,13 @@ test("horizontal |dx|>40 commits, vertical-dominant does not", () => {
   assert.equal(shouldCommitSwipe(-41, 12), true);
   assert.equal(shouldCommitSwipe(40, 0), false);
   assert.equal(shouldCommitSwipe(80, 90), false);
+});
+
+test("swipe down closes when vertical travel wins", () => {
+  assert.equal(shouldCloseDown(8, 41), true);
+  assert.equal(shouldCloseDown(0, 40), false);
+  assert.equal(shouldCloseDown(90, 80), false);
+  assert.equal(shouldCloseDown(10, -41), false);
 });
 
 test("one-plane goTo jumps dolly so snapDolly cannot revert", () => {

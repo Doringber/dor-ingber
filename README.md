@@ -70,7 +70,7 @@ title:
 Hebrew-first body.
 ```
 
-Notes dock over the volume on `/`. `/writing/[slug]` remains the article deep link.
+Tapping a note slab opens `/writing/[slug]` as a full-bleed paper over the volume. Close, swipe down, or הקודם / הבא to move between the two notes.
 
 ## Develop
 

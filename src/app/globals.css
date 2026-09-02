@@ -10,6 +10,7 @@
   --font-sans: var(--font-geist-sans), var(--font-heebo), sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
   --font-serif: var(--font-instrument), ui-serif, Georgia, serif;
+  --font-note: var(--font-frank), var(--font-heebo), ui-serif, serif;
 }
 
 :root {
@@ -43,7 +44,9 @@ body {
 }
 
 html:has(.spatial-root),
-body:has(.spatial-root) {
+body:has(.spatial-root),
+html:has(.note-reader),
+body:has(.note-reader) {
   height: 100%;
   overflow: hidden;
 }
@@ -128,6 +131,11 @@ button {
   background: #050507;
   touch-action: none;
   user-select: none;
+}
+
+.spatial-root.is-reading .spatial-chrome {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .spatial-canvas {
@@ -598,140 +606,168 @@ iframe[title*="Netlify"] {
   pointer-events: none !important;
 }
 
-.note-dock {
-  position: absolute;
+.note-reader {
+  position: fixed;
   inset: 0;
-  z-index: 40;
+  z-index: 50;
+  display: grid;
+  place-items: center;
   pointer-events: auto;
+  touch-action: pan-y;
 }
 
-.note-dock-backdrop {
+.note-reader-rebate {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  padding: 7vmin;
+  box-shadow:
+    inset 0 0 0 1px rgba(92, 62, 28, 0.22),
+    inset 0 0 28px rgba(70, 40, 14, 0.16);
+}
+
+.note-reader-rebate .film-rebate-age::before,
+.note-reader-rebate .film-rebate-age::after {
+  display: none;
+}
+
+.note-reader-sheet {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 10px;
+  background: #e8dfc8;
+  color: #1a1a18;
+  box-shadow: inset 0 0 0 1px rgba(20, 12, 6, 0.18);
+}
+
+.note-reader-sheet::after {
+  content: "";
   position: absolute;
   inset: 0;
-  width: 100%;
-  background: rgba(5, 5, 7, 0.46);
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.22;
+  mix-blend-mode: multiply;
+  background-image:
+    radial-gradient(ellipse at 12% 8%, rgba(92, 48, 16, 0.14), transparent 42%),
+    radial-gradient(ellipse at 88% 96%, rgba(78, 40, 12, 0.16), transparent 46%),
+    url("/grain.svg");
+  background-repeat: repeat;
 }
 
-.note-dock-panel {
+.note-reader-close {
   position: absolute;
-  top: 0;
-  right: 0;
-  width: min(680px, 100%);
-  height: 100%;
-  overflow: auto;
-  background: color-mix(in srgb, var(--color-page) 92%, black);
-  border-left: 1px solid var(--color-line);
-}
-
-.note-dock-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 20px 0;
-}
-
-.note-dock-close,
-.note-dock-link {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.note-dock-article {
-  padding-top: 24px;
-  padding-bottom: 80px;
-}
-
-.writing-chrome {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: min(1120px, calc(100% - 40px));
-  margin: 0 auto;
-  padding: 22px 0 8px;
-}
-
-.writing-wordmark {
+  top: 8px;
+  right: 8px;
+  z-index: 3;
+  color: #1a1a18;
   font-family: var(--font-serif);
-  font-size: clamp(28px, 4vw, 36px);
-  letter-spacing: -0.04em;
+  font-size: 28px;
+  font-weight: 400;
   line-height: 1;
 }
 
-.nav-list {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
+.note-reader-scroll {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
 }
 
-.article-shell {
-  padding: 0 0 96px;
+.note-reader-article {
+  width: min(36ch, calc(100% - 48px));
+  margin: 0 auto;
+  padding: 72px 0 28px;
 }
 
-.article-column {
-  width: min(680px, calc(100% - 40px));
-  margin-inline: auto;
+.note-reader-kicker {
+  margin-bottom: 18px;
+  text-align: center;
 }
 
-.article-kicker {
-  margin-bottom: 16px;
-}
-
-.article-title {
-  margin: 0;
-  font-family: var(--font-serif);
-  font-size: clamp(2rem, 5vw, 2.75rem);
-  font-weight: 400;
-  letter-spacing: -0.03em;
+.note-reader-title {
+  margin: 0 0 28px;
+  color: #1a1a18;
+  font-family: var(--font-note);
+  font-size: clamp(40px, 6vw, 48px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
   line-height: 1.15;
+  text-align: start;
 }
 
-.article-title-en {
-  margin: 10px 0 0;
-  color: var(--color-mute);
-  font-size: 1rem;
+.note-reader-body {
+  color: #1a1a18;
+  font-family: var(--font-note);
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 1.55;
 }
 
-.article-date {
-  margin: 18px 0 32px;
+.note-reader-body p {
+  margin: 0 0 1.15em;
 }
 
-.article-body {
-  font-size: 1.0625rem;
-  line-height: 1.8;
-}
-
-.article-body p {
-  margin: 0 0 1.25em;
-}
-
-.article-body p:last-child {
+.note-reader-body p:last-child {
   margin-bottom: 0;
 }
 
-.read-progress {
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 80;
-  width: 1px;
-  height: 100%;
-  background: var(--color-line);
-  pointer-events: none;
+.note-reader-nav {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 16px 12px;
 }
 
-.read-progress-fill {
-  width: 1px;
-  background: var(--color-kicker);
+.note-reader-link {
+  color: #1a1a18;
+  font-family: var(--font-note);
+  font-size: 16px;
+}
+
+.note-reader-link.is-off {
+  opacity: 0.28;
+}
+
+.note-reader-slash {
+  display: none;
+  color: #1a1a18;
+  font-family: var(--font-note);
+  font-size: 16px;
 }
 
 @media (min-width: 720px) {
   .mobile-only {
     display: none !important;
+  }
+
+  .note-reader-rebate {
+    width: min(920px, calc(100vw - 12vmin));
+    height: min(92vh, calc(100vh - 12vmin));
+    padding: 7vmin;
+  }
+
+  .note-reader-kicker,
+  .note-reader-title {
+    text-align: center;
+  }
+
+  .note-reader-nav {
+    justify-content: center;
+  }
+
+  .note-reader-slash {
+    display: inline;
   }
 }
 
@@ -764,9 +800,17 @@ iframe[title*="Netlify"] {
     font-size: 11px;
   }
 
-  .note-dock-panel {
-    width: 100%;
-    border-left: 0;
+  .note-reader-title {
+    text-align: start;
+  }
+
+  .note-reader-body {
+    font-size: 20px;
+  }
+
+  .note-reader-article {
+    width: min(36ch, calc(100% - 36px));
+    padding-top: 64px;
   }
 }
 
