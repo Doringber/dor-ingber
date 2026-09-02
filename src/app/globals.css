@@ -1,12 +1,16 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-page: #050507;
+  --color-page: #1c1612;
   --color-ink: #f2f2f2;
   --color-mute: #8a8a8a;
   --color-kicker: #0bb46f;
-  --color-line: #1c1c1e;
-  --color-panel: #0a0a0c;
+  --color-line: #2a221c;
+  --color-panel: #241c16;
+  --color-volume: #1c1612;
+  --color-note-slab: #c4a06a;
+  --color-note-reader: #d4b48a;
+  --color-note-ink: #2c2118;
   --font-sans: var(--font-geist-sans), var(--font-heebo), sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
   --font-serif: var(--font-instrument), ui-serif, Georgia, serif;
@@ -131,7 +135,8 @@ button {
   position: fixed;
   inset: 0;
   overflow: hidden;
-  background: #050507;
+  --station-light: 0.55;
+  background: #1c1612;
   touch-action: none;
   user-select: none;
 }
@@ -321,11 +326,14 @@ button {
   pointer-events: auto;
   min-width: 44px;
   min-height: 44px;
-  opacity: 0.52;
+  opacity: 0.55;
+  filter: brightness(var(--station-light));
 }
 
 .volume-station.is-focused {
   z-index: 2;
+  --station-light: 1;
+  opacity: 1;
 }
 
 .volume-station.is-note,
@@ -389,7 +397,7 @@ button {
 .fallback-note-body {
   display: block;
   padding: 28px 24px 56px;
-  color: #f2f2f2;
+  color: #2c2118;
   font-size: 1.35rem;
   line-height: 1.35;
   text-align: right;
@@ -423,6 +431,17 @@ button {
 
 .fallback-note.film-rebate {
   padding: 7.2%;
+  background-color: #c4a06a;
+  background-image:
+    radial-gradient(ellipse at 0% 8%, rgba(92, 48, 16, 0.22), transparent 46%),
+    radial-gradient(ellipse at 100% 100%, rgba(78, 40, 12, 0.2), transparent 44%),
+    radial-gradient(ellipse at 70% 0%, rgba(60, 34, 12, 0.1), transparent 42%),
+    linear-gradient(180deg, #d4b48a 0%, #c4a06a 52%, #b89258 100%);
+}
+
+.fallback-note .film-rebate-sprockets,
+.fallback-note .film-rebate-mark {
+  display: none;
 }
 
 .film-rebate-age {
@@ -492,7 +511,7 @@ button {
   z-index: 1;
   overflow: hidden;
   border-radius: 6px;
-  background: #111113;
+  background: #1c1612;
   box-shadow: inset 0 0 0 1px rgba(20, 12, 6, 0.35);
 }
 
@@ -502,7 +521,7 @@ button {
 
 .film-window.is-note {
   min-height: 420px;
-  background: #0a0a0c;
+  background: #d4b48a;
 }
 
 .link-plane {
@@ -510,7 +529,7 @@ button {
   width: 100%;
   height: 100%;
   min-height: 180px;
-  background: #0a0a0c;
+  background: #241c16;
 }
 
 .link-plane-title {
@@ -548,7 +567,7 @@ button {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background: #111113;
+  background: #1c1612;
   filter: none;
 }
 
@@ -584,7 +603,12 @@ button {
 
 .media-image {
   object-fit: cover;
-  filter: grayscale(1) contrast(1.12) brightness(0.92);
+  filter: grayscale(1) contrast(0.92) brightness(1.14);
+}
+
+.media-image.is-tone,
+.is-tone .media-image {
+  filter: grayscale(0.38) saturate(0.72) contrast(1.04) brightness(1.02);
 }
 
 .media-poster {
@@ -637,6 +661,11 @@ iframe[title*="Netlify"] {
   width: 100%;
   height: 100%;
   padding: 7vmin;
+  background-color: #c4a06a;
+  background-image:
+    radial-gradient(ellipse at 0% 8%, rgba(92, 48, 16, 0.22), transparent 46%),
+    radial-gradient(ellipse at 100% 100%, rgba(78, 40, 12, 0.2), transparent 44%),
+    linear-gradient(180deg, #d0b07e 0%, #c4a06a 52%, #b89258 100%);
   box-shadow:
     inset 0 0 0 1px rgba(92, 62, 28, 0.22),
     inset 0 0 28px rgba(70, 40, 14, 0.16);
@@ -655,8 +684,8 @@ iframe[title*="Netlify"] {
   height: 100%;
   overflow: hidden;
   border-radius: 10px;
-  background: #e8dfc8;
-  color: #1a1a18;
+  background: #d4b48a;
+  color: #2c2118;
   box-shadow: inset 0 0 0 1px rgba(20, 12, 6, 0.18);
 }
 
@@ -680,7 +709,7 @@ iframe[title*="Netlify"] {
   top: 8px;
   right: 8px;
   z-index: 3;
-  color: #1a1a18;
+  color: #2c2118;
   font-family: var(--font-serif);
   font-size: 28px;
   font-weight: 400;
@@ -710,7 +739,7 @@ iframe[title*="Netlify"] {
 
 .note-reader-title {
   margin: 0 0 28px;
-  color: #1a1a18;
+  color: #2c2118;
   font-family: var(--font-note);
   font-size: clamp(40px, 6vw, 48px);
   font-weight: 700;
@@ -720,7 +749,7 @@ iframe[title*="Netlify"] {
 }
 
 .note-reader-body {
-  color: #1a1a18;
+  color: #2c2118;
   font-family: var(--font-note);
   font-size: 22px;
   font-weight: 400;
@@ -746,7 +775,7 @@ iframe[title*="Netlify"] {
 }
 
 .note-reader-link {
-  color: #1a1a18;
+  color: #2c2118;
   font-family: var(--font-note);
   font-size: 16px;
 }
@@ -757,7 +786,7 @@ iframe[title*="Netlify"] {
 
 .note-reader-slash {
   display: none;
-  color: #1a1a18;
+  color: #2c2118;
   font-family: var(--font-note);
   font-size: 16px;
 }

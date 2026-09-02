@@ -16,8 +16,14 @@ export const FOCUS_Z_PX = 0;
 export const Z_STEP_PX = 280;
 export const VOLUME_LIFT_PX = 36;
 export const XY_POSE_UNIT = 2;
-export const NEIGHBOR_OPACITY = 0.52;
+export const NEIGHBOR_OPACITY = 0.55;
 export const FOCUS_OPACITY = 1;
+export const NEIGHBOR_LIGHT = 0.55;
+export const FOCUS_LIGHT = 1;
+export const VOLUME_BG = "#1C1612";
+export const NOTE_SLAB = "#C4A06A";
+export const NOTE_READER = "#D4B48A";
+export const NOTE_INK = "#2C2118";
 
 export type StationFrame = {
   width: number;
@@ -93,6 +99,21 @@ export function planeHeight(width: number, slab: boolean): number {
 export function focusOpacity(focus: number): number {
   const t = clampFocus(focus);
   return NEIGHBOR_OPACITY + (FOCUS_OPACITY - NEIGHBOR_OPACITY) * t;
+}
+
+export function focusLight(focus: number): number {
+  const t = clampFocus(focus);
+  return NEIGHBOR_LIGHT + (FOCUS_LIGHT - NEIGHBOR_LIGHT) * t;
+}
+
+export function stationLightStyle(focus: number): {
+  opacity: number;
+  brightness: number;
+} {
+  return {
+    opacity: focusOpacity(focus),
+    brightness: focusLight(focus),
+  };
 }
 
 export function stationWorldZ(index: number, dolly: number): number {

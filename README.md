@@ -21,7 +21,7 @@ Loaders in `src/lib`:
 - `getWorks()` / `getWork(slug)`
 - `getWriting()` / `getWritingBySlug(slug)`
 
-The homepage is a single spatial volume: three films, then findmywatermalon (GAME), thinkingbreak (GAME), vintage-market (BUILD), then the notes. There is no second information architecture. Desktop stations size from the viewport — one hero plane `min(56vw, 960px)` at 16:9, neighbors stay at `28vw` and recede. Scale interpolates with focus while scrolling or dragging. Phone stays one plane. Not the old 78vw / 1280 featured lock or the 2.7 world-unit stamp.
+The homepage is a single spatial volume: three films, then findmywatermalon (GAME), thinkingbreak (GAME), vintage-market (BUILD), then the notes. There is no second information architecture. The volume sits on warm dark `#1C1612`, not pure black. Desktop stations size from the viewport — one hero plane `min(56vw, 960px)` at 16:9 with a lift, neighbors stay at `28vw` and recede at ~0.55 opacity and brightness. Scale and light interpolate with focus while scrolling or dragging. Films are lifted black-and-white; games and builds keep a little tone. Notes are kraft (`#C4A06A` slab, `#D4B48A` reader, `#2C2118` ink), never black slabs. Phone stays one plane. Not the old 78vw / 1280 featured lock or the 2.7 world-unit stamp.
 
 ### Work JSON
 

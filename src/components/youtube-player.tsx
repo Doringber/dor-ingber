@@ -34,7 +34,7 @@ export function YoutubePlayer({
             fill
             unoptimized
             sizes="(max-width: 720px) 100vw, min(56vw, 960px)"
-            className="media-image"
+            className="media-image is-film"
             onError={(event) => {
               event.currentTarget.style.visibility = "hidden";
             }}
