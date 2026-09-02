@@ -62,7 +62,7 @@ function isChromeTarget(target: EventTarget | null): boolean {
     target instanceof Element &&
     Boolean(
       target.closest(
-        "iframe, .note-dock, .spatial-chrome button, .mobile-menu, .note-hit",
+        "iframe, .note-dock, .spatial-chrome button, .mobile-menu",
       ),
     )
   );

@@ -57,11 +57,6 @@ export function YoutubePlayer({
           />
           {heavyGrain ? <span className="grain-thumb" aria-hidden /> : null}
           <span className="media-wash" aria-hidden />
-          <span className="play-button" aria-hidden>
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-              <path d="M8 5.14v13.72L19 12 8 5.14Z" />
-            </svg>
-          </span>
           {onPlay ? null : (
             <button
               type="button"

@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { centerScreenHit, elementScreenRect } from "@/lib/hits";
-import type { NoteStation, SpatialStation } from "@/lib/stations";
+import { elementScreenRect } from "@/lib/hits";
+import type { SpatialStation } from "@/lib/stations";
 
 type HitLayerProps = {
   root: HTMLElement | null;
@@ -38,9 +38,6 @@ export function HitLayer({
   onGoTo,
 }: HitLayerProps) {
   const layerRef = useRef<HTMLDivElement>(null);
-  const notes = stations.filter(
-    (station): station is NoteStation => station.kind === "note",
-  );
 
   useEffect(() => {
     const layer = layerRef.current;
@@ -65,12 +62,7 @@ export function HitLayer({
             target.hidden = true;
             continue;
           }
-          if (station.index === focused) {
-            target.hidden = false;
-            applyRect(target, centerScreenHit(source));
-            continue;
-          }
-          if (volume) {
+          if (station.index === focused || volume) {
             target.hidden = false;
             applyRect(target, elementScreenRect(source));
             continue;
@@ -79,7 +71,7 @@ export function HitLayer({
           continue;
         }
 
-        if (volume) {
+        if (volume || station.index === focused) {
           target.hidden = false;
           applyRect(target, elementScreenRect(source));
           continue;
@@ -127,26 +119,6 @@ export function HitLayer({
           }}
         />
       ))}
-      {!volume ? (
-        <div className="note-hits">
-          {notes.map((note) => (
-            <button
-              key={`chip-${note.slug}`}
-              type="button"
-              className="note-hit tap"
-              onClick={(event) => {
-                event.stopPropagation();
-                if (shouldIgnoreTap()) {
-                  return;
-                }
-                onOpenNote(note.slug);
-              }}
-            >
-              NOTE · {note.noteNumber}
-            </button>
-          ))}
-        </div>
-      ) : null}
     </div>
   );
 }

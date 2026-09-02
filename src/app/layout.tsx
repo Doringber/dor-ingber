@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Heebo, Instrument_Serif } from "next/font/google";
 import { Grain } from "@/components/grain";
+import { KillOverlays } from "@/components/kill-overlays";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -44,6 +45,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body>
         <Grain />
+        <KillOverlays />
         {children}
       </body>
     </html>
