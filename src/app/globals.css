@@ -835,21 +835,24 @@ iframe[title*="Netlify"] {
 
   .note-reader {
     display: grid;
-    place-items: center;
-    grid-template-rows: 1fr;
+    grid-template-rows: auto 1fr;
+    place-items: stretch;
+    padding-bottom: 4vmin;
   }
 
   .note-reader-rebate {
     width: min(920px, calc(100vw - 12vmin));
-    height: min(92vh, calc(100vh - 12vmin));
+    height: min(calc(92vh - 48px), calc(100vh - 16vmin));
+    justify-self: center;
+    align-self: center;
     padding: 7vmin;
   }
 
   .note-reader-kicker {
-    position: absolute;
-    top: 22px;
-    left: 28px;
-    padding: 0;
+    position: relative;
+    top: auto;
+    left: auto;
+    padding: 18px 28px 8px;
   }
 
   .note-reader-title {
