@@ -9,6 +9,10 @@ type StationPlaneProps = {
   playing?: boolean;
 };
 
+function GestureLayer() {
+  return <span className="plane-gesture" aria-hidden />;
+}
+
 export function StationPlane({ station, resetKey, playing }: StationPlaneProps) {
   if (station.kind === "film") {
     return (
@@ -20,6 +24,7 @@ export function StationPlane({ station, resetKey, playing }: StationPlaneProps) 
           playing={playing}
         />
         {playing ? null : <span className="kicker plane-kicker">FILM</span>}
+        <GestureLayer />
       </div>
     );
   }
@@ -32,6 +37,7 @@ export function StationPlane({ station, resetKey, playing }: StationPlaneProps) 
           <span className="kicker plane-kicker">{stationKicker(station)}</span>
           <span className="grain-thumb" aria-hidden />
         </div>
+        <GestureLayer />
       </div>
     );
   }
@@ -43,6 +49,7 @@ export function StationPlane({ station, resetKey, playing }: StationPlaneProps) 
       </span>
       <span className="kicker">NOTE</span>
       <span className="grain-thumb" aria-hidden />
+      <GestureLayer />
     </div>
   );
 }
