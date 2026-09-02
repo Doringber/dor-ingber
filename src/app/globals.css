@@ -5,7 +5,6 @@
   --color-ink: #f2f2f2;
   --color-mute: #8a8a8a;
   --color-kicker: #0bb46f;
-  --color-teal: #087a4c;
   --color-line: #1c1c1e;
   --color-panel: #0a0a0c;
   --font-sans: var(--font-geist-sans), var(--font-heebo), sans-serif;
@@ -103,7 +102,7 @@ button {
 
 .kicker {
   margin: 0;
-  color: var(--color-kicker);
+  color: #0bb46f;
   font-family: var(--font-mono);
   font-size: 12px;
   letter-spacing: 0.08em;
@@ -415,9 +414,11 @@ button {
 
 .media-frame {
   position: relative;
+  isolation: isolate;
   aspect-ratio: 16 / 9;
   overflow: hidden;
   background: #111113;
+  filter: none;
 }
 
 .media-iframe,
@@ -431,6 +432,7 @@ button {
 
 .media-iframe {
   filter: none;
+  -webkit-filter: none;
   pointer-events: auto;
 }
 

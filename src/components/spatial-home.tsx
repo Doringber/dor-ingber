@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { NoteDock } from "@/components/note-dock";
 import { StationPlane } from "@/components/station-plane";
+import { stationAtScreenPoint } from "@/lib/hits";
 import { hasWebGPU } from "@/lib/gpu/detect";
 import { clamp } from "@/lib/gpu/math";
 import { startVolume } from "@/lib/gpu/volume";
@@ -405,12 +406,18 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
       return;
     }
 
-    const stationNode =
+    const fromNode =
       event.target instanceof Element ? event.target.closest("[data-station]") : null;
-    if (!(stationNode instanceof HTMLElement)) {
+    const fromScreen = rootRef.current
+      ? stationAtScreenPoint(rootRef.current, event.clientX, event.clientY, index)
+      : null;
+    const hit =
+      fromNode instanceof HTMLElement
+        ? Number(fromNode.dataset.station)
+        : fromScreen;
+    if (hit == null || !Number.isFinite(hit)) {
       return;
     }
-    const hit = Number(stationNode.dataset.station);
     const station = stations.find((item) => item.index === hit);
     if (!station) {
       return;
