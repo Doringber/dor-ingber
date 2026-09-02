@@ -48,9 +48,10 @@ export type NoteStation = {
 
 export type SpatialStation = FilmStation | LinkStation | NoteStation;
 
-const WIDE: [number, number] = [2.7, 1.52];
-const FEATURED: [number, number] = [3.2, 1.8];
-const SLAB: [number, number] = [1.2, 2.05];
+/* Aspect hints only. Rendered size comes from the viewport in scale.ts. */
+const WIDE: [number, number] = [16, 9];
+const FEATURED: [number, number] = [16, 9];
+const SLAB: [number, number] = [12, 20];
 const XS = [1.55, -1.35, 1.75, -1.55, 2.05, -2.85] as const;
 const YS = [0.28, 0.42, 0.3, 0.44, 0.26, 0.62] as const;
 

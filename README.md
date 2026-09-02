@@ -21,7 +21,7 @@ Loaders in `src/lib`:
 - `getWorks()` / `getWork(slug)`
 - `getWriting()` / `getWritingBySlug(slug)`
 
-The homepage is a single spatial volume: three films, then findmywatermalon (GAME), thinkingbreak (GAME), vintage-market (BUILD), then the notes. There is no second information architecture.
+The homepage is a single spatial volume: three films, then findmywatermalon (GAME), thinkingbreak (GAME), vintage-market (BUILD), then the notes. There is no second information architecture. Desktop stations size from the viewport — focused plane `min(78vw, 1280px)` at 16:9, neighbors peek at `42vw` — not the old 2.7 world-unit stamp.
 
 ### Work JSON
 

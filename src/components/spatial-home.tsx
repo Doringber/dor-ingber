@@ -4,6 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   useSyncExternalStore,
@@ -15,6 +16,7 @@ import { noteFromPath, writingPath } from "@/lib/note-reader";
 import { hasWebGPU } from "@/lib/gpu/detect";
 import { clamp } from "@/lib/gpu/math";
 import { startVolume } from "@/lib/gpu/volume";
+import { stationFrame, stationWorldZ, VOLUME_LIFT_PX } from "@/lib/scale";
 import {
   firstNoteIndex,
   LOOK_CLAMP_RAD,
@@ -35,7 +37,7 @@ type SpatialHomeProps = {
   stations: SpatialStation[];
 };
 
-const WORLD = 150;
+const VIEWPORT_FALLBACK = 1280;
 
 function subscribeMedia(query: string, onChange: () => void): () => void {
   const media = window.matchMedia(query);
@@ -48,6 +50,19 @@ function useMedia(query: string): boolean {
     (onChange) => subscribeMedia(query, onChange),
     () => window.matchMedia(query).matches,
     () => false,
+  );
+}
+
+function subscribeViewport(onChange: () => void): () => void {
+  window.addEventListener("resize", onChange);
+  return () => window.removeEventListener("resize", onChange);
+}
+
+function useViewportWidth(): number {
+  return useSyncExternalStore(
+    subscribeViewport,
+    () => window.innerWidth,
+    () => VIEWPORT_FALLBACK,
   );
 }
 
@@ -110,6 +125,7 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
   const readerOpen = noteFromPath(pathname) !== null;
   const reducedMotion = useMedia(REDUCED_MOTION_QUERY);
   const mobile = useMedia(MOBILE_QUERY);
+  const viewportWidth = useViewportWidth();
   const hash = useSyncExternalStore(subscribeHash, getHash, getServerHash);
   const hashIndex = indexFromHash(stations, hash);
   const [gpuReady, setGpuReady] = useState(false);
@@ -124,6 +140,15 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
   const frozen = reducedMotion || (gpuTried && !gpuReady);
   const onePlane = mobile || frozen;
   const showVolumeStations = gpuReady && !onePlane;
+  const frames = useMemo(
+    () =>
+      stations.map((station) =>
+        stationFrame(station, station.index === index, viewportWidth, index),
+      ),
+    [index, stations, viewportWidth],
+  );
+  const framesRef = useRef(frames);
+  framesRef.current = frames;
 
   const setFocusedIndex = useCallback((next: number) => {
     setUserIndex(next);
@@ -296,7 +321,16 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
       if (world && gpuRef.current && !mobileRef.current && !reduced) {
         const yaw = (lookRef.current.yaw * 180) / Math.PI;
         const pitch = (lookRef.current.pitch * 180) / Math.PI;
-        world.style.transform = `rotateX(${pitch}deg) rotateY(${yaw}deg) translate3d(0px, 36px, ${-dollyRef.current * 220}px)`;
+        world.style.transform = `rotateX(${pitch}deg) rotateY(${yaw}deg) translate3d(0px, ${VOLUME_LIFT_PX}px, 0px)`;
+        const dolly = dollyRef.current;
+        for (const node of world.querySelectorAll<HTMLElement>("[data-station]")) {
+          const stationIndex = Number(node.dataset.station);
+          const frame = framesRef.current[stationIndex];
+          if (!frame || !Number.isFinite(stationIndex)) {
+            continue;
+          }
+          node.style.transform = `translate3d(${frame.x}px, ${frame.y}px, ${stationWorldZ(stationIndex, dolly)}px) translate(-50%, -50%)`;
+        }
       }
 
       pointerRef.current.vx *= 0.86;
@@ -488,24 +522,25 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
       {showVolumeStations ? (
         <div className="volume-stage">
           <div ref={worldRef} className="volume-world">
-            {stations.map((station) => (
-              <div
-                key={`${station.kind}-${station.index}`}
-                data-station={station.index}
-                className={`volume-station${station.index === index ? " is-focused" : ""}`}
-                style={{
-                  width: station.size[0] * WORLD,
-                  height: station.size[1] * WORLD,
-                  transform: `translate3d(${station.position[0] * WORLD}px, ${-station.position[1] * WORLD}px, ${station.position[2] * WORLD}px) translate(-50%, -50%)`,
-                }}
-              >
-                <StationPlane
-                  station={station}
-                  resetKey={`${station.kind}-${station.index}-${station.index === index}`}
-                  playing={playingId === station.index}
-                />
-              </div>
-            ))}
+            {stations.map((station) => {
+              const frame = frames[station.index] ?? frames[0];
+              return (
+                <div
+                  key={`${station.kind}-${station.index}`}
+                  data-station={station.index}
+                  className={`volume-station${station.index === index ? " is-focused" : ""}${station.kind === "note" ? " is-note" : ""}`}
+                  style={{
+                    transform: `translate3d(${frame.x}px, ${frame.y}px, ${frame.z}px) translate(-50%, -50%)`,
+                  }}
+                >
+                  <StationPlane
+                    station={station}
+                    resetKey={`${station.kind}-${station.index}-${station.index === index}`}
+                    playing={playingId === station.index}
+                  />
+                </div>
+              );
+            })}
           </div>
         </div>
       ) : null}
