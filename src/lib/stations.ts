@@ -88,3 +88,7 @@ export function firstNoteIndex(stations: SpatialStation[]): number {
 export function stationLabel(station: SpatialStation): string {
   return `${station.title.he} / ${station.title.en}`;
 }
+
+export function snapDolly(value: number, count: number): number {
+  return Math.min(Math.max(count - 1, 0), Math.max(0, Math.round(value)));
+}

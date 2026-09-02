@@ -8,7 +8,7 @@ Personal site for AI films and notes.
 - TypeScript
 - Tailwind CSS
 - File-based content (no CMS)
-- WebGPU spatial volume on `/`, with a still one-plane fallback
+- [vgpu](https://vgpu.sh) WebGPU volume on `/` (mouse, velocity, scroll, time), with a still CSS one-plane fallback
 
 Routes: `/` and `/writing/[slug]`.
 

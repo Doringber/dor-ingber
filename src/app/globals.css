@@ -281,6 +281,50 @@ button {
   margin: 0;
 }
 
+.volume-stage {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  perspective: 1100px;
+  perspective-origin: 50% 46%;
+  pointer-events: none;
+}
+
+.volume-world {
+  position: absolute;
+  left: 50%;
+  top: 48%;
+  width: 0;
+  height: 0;
+  transform-style: preserve-3d;
+  pointer-events: none;
+}
+
+.volume-station {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-style: preserve-3d;
+  pointer-events: auto;
+}
+
+.volume-station .fallback-plane {
+  width: 100%;
+  height: 100%;
+}
+
+.volume-station .fallback-film,
+.volume-station .fallback-note,
+.volume-station .media-frame {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.volume-station.is-focused {
+  z-index: 2;
+}
+
 .fallback-stage {
   position: absolute;
   inset: 0;

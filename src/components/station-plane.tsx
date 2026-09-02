@@ -3,17 +3,18 @@
 import { YoutubePlayer } from "@/components/youtube-player";
 import { stationLabel, type SpatialStation } from "@/lib/stations";
 
-type FallbackPlaneProps = {
+type StationPlaneProps = {
   station: SpatialStation;
   onOpenNote: (slug: string) => void;
+  resetKey?: string;
 };
 
-export function FallbackPlane({ station, onOpenNote }: FallbackPlaneProps) {
+export function StationPlane({ station, onOpenNote, resetKey }: StationPlaneProps) {
   if (station.kind === "film") {
     return (
-      <div className="fallback-plane fallback-film">
+      <div className="station-plane fallback-plane fallback-film">
         <YoutubePlayer
-          key={station.youtubeId}
+          key={resetKey ?? station.youtubeId}
           youtubeId={station.youtubeId}
           title={stationLabel(station)}
         />
@@ -24,7 +25,7 @@ export function FallbackPlane({ station, onOpenNote }: FallbackPlaneProps) {
   return (
     <button
       type="button"
-      className="fallback-plane fallback-note tap"
+      className="station-plane fallback-plane fallback-note tap"
       onClick={() => onOpenNote(station.slug)}
     >
       <span className="fallback-note-body" dir="rtl" lang="he">

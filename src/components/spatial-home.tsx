@@ -1,18 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
-import { FallbackPlane } from "@/components/fallback-plane";
 import { NoteDock } from "@/components/note-dock";
-import { YoutubePlayer } from "@/components/youtube-player";
+import { StationPlane } from "@/components/station-plane";
 import { hasWebGPU } from "@/lib/gpu/detect";
 import { clamp } from "@/lib/gpu/math";
-import { SpatialRenderer, snapDolly, stationKey } from "@/lib/gpu/renderer";
+import { startVolume } from "@/lib/gpu/volume";
 import {
   firstNoteIndex,
   LOOK_CLAMP_RAD,
   MOBILE_QUERY,
   REDUCED_MOTION_QUERY,
-  stationLabel,
+  snapDolly,
   type NoteStation,
   type SpatialStation,
 } from "@/lib/stations";
@@ -21,12 +20,7 @@ type SpatialHomeProps = {
   stations: SpatialStation[];
 };
 
-type ScreenRect = {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-};
+const WORLD = 150;
 
 function useMedia(query: string): boolean {
   const [matches, setMatches] = useState(false);
@@ -64,8 +58,7 @@ function getServerHash(): string {
 
 export function SpatialHome({ stations }: SpatialHomeProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const rendererRef = useRef<SpatialRenderer | null>(null);
-  const playerLayerRef = useRef<HTMLDivElement>(null);
+  const worldRef = useRef<HTMLDivElement>(null);
   const dollyRef = useRef(0);
   const targetRef = useRef(0);
   const lookRef = useRef({ yaw: 0, pitch: 0 });
@@ -74,15 +67,12 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
     y: 0.5,
     vx: 0,
     vy: 0,
-    lastX: 0,
-    lastY: 0,
     down: false,
     dragging: false,
     startX: 0,
     startY: 0,
     startDolly: 0,
   });
-  const playingRef = useRef<string | null>(null);
   const indexRef = useRef(0);
   const reducedRef = useRef(false);
   const mobileRef = useRef(false);
@@ -96,10 +86,8 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
   const [gpuTried, setGpuTried] = useState(false);
   const [userIndex, setUserIndex] = useState<number | null>(null);
   const index = userIndex ?? hashIndex;
-  const [playingId, setPlayingId] = useState<string | null>(null);
   const [dockSlug, setDockSlug] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [playerRect, setPlayerRect] = useState<ScreenRect | null>(null);
 
   const last = Math.max(stations.length - 1, 0);
   const current = stations[index] ?? stations[0];
@@ -113,9 +101,7 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
   );
   const frozen = reducedMotion || (gpuTried && !gpuReady);
   const onePlane = mobile || frozen;
-  const showHtmlPlane = !gpuReady || (frozen && !gpuReady);
-  const playingStation =
-    current?.kind === "film" && playingId === current.youtubeId ? current : null;
+  const showVolumeStations = gpuReady && !onePlane;
 
   const goTo = useCallback(
     (next: number, immediate = false) => {
@@ -125,8 +111,6 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
         dollyRef.current = clamped;
       }
       setUserIndex(clamped);
-      setPlayingId(null);
-      setPlayerRect(null);
     },
     [last],
   );
@@ -134,17 +118,15 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
   const openNote = useCallback((slug: string) => {
     setDockSlug(slug);
     setMenuOpen(false);
-    setPlayingId(null);
   }, []);
 
   useEffect(() => {
     reducedRef.current = reducedMotion;
     mobileRef.current = mobile;
     gpuRef.current = gpuReady;
-    playingRef.current = playingId;
     indexRef.current = index;
     targetRef.current = index;
-  }, [gpuReady, index, mobile, playingId, reducedMotion]);
+  }, [gpuReady, index, mobile, reducedMotion]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -154,47 +136,30 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
       return;
     }
 
-    let cancelled = false;
-    const renderer = new SpatialRenderer();
-    rendererRef.current = renderer;
-
-    void renderer.init(canvas).then(async (ok) => {
-      if (cancelled) {
-        renderer.dispose();
-        return;
-      }
-      setGpuTried(true);
-      if (!ok) {
-        setGpuReady(false);
-        return;
-      }
-      await renderer.setStations(stations);
-      if (cancelled) {
-        renderer.dispose();
-        return;
-      }
-      setGpuReady(true);
-    });
-
-    return () => {
-      cancelled = true;
-      renderer.dispose();
-      rendererRef.current = null;
-    };
-  }, [stations]);
+    return startVolume(
+      canvas,
+      () => ({
+        mouse: [pointerRef.current.x, pointerRef.current.y],
+        velocity: [pointerRef.current.vx, pointerRef.current.vy],
+        scroll: dollyRef.current,
+        time: reducedRef.current ? 0 : performance.now() / 1000,
+      }),
+      {
+        frozen: reducedMotion,
+        onReady: (ok) => {
+          setGpuTried(true);
+          setGpuReady(ok);
+        },
+      },
+    );
+  }, [reducedMotion]);
 
   useEffect(() => {
-    const renderer = rendererRef.current;
-    if (!renderer || !gpuReady) {
-      return;
-    }
-
     let frame = 0;
-    const tick = (now: number) => {
+    const tick = () => {
       const reduced = reducedRef.current;
-      const isMobile = mobileRef.current;
       if (!reduced) {
-        dollyRef.current = dollyRef.current + (targetRef.current - dollyRef.current) * 0.08;
+        dollyRef.current += (targetRef.current - dollyRef.current) * 0.08;
       } else {
         dollyRef.current = targetRef.current;
         lookRef.current.yaw = 0;
@@ -202,45 +167,16 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
       }
 
       const focused = snapDolly(dollyRef.current, stations.length);
-      const focusedStation = stations[focused];
       if (focused !== indexRef.current) {
         indexRef.current = focused;
         setUserIndex(focused);
-        if (playingRef.current) {
-          setPlayingId(null);
-        }
       }
 
-      const hidden =
-        playingRef.current && focusedStation?.kind === "film"
-          ? stationKey(focusedStation)
-          : null;
-
-      renderer.setDrive({
-        mouse: [pointerRef.current.x, pointerRef.current.y],
-        velocity: [pointerRef.current.vx, pointerRef.current.vy],
-        scroll: dollyRef.current,
-        time: reduced ? 0 : now / 1000,
-      });
-      renderer.setView({
-        dolly: reduced ? focused : dollyRef.current,
-        yaw: isMobile || reduced ? 0 : lookRef.current.yaw,
-        pitch: isMobile || reduced ? 0 : lookRef.current.pitch,
-        focused,
-        onePlane: isMobile || reduced,
-        hiddenId: hidden,
-      });
-      renderer.frame();
-
-      if (playingRef.current && focusedStation?.kind === "film") {
-        const quad = renderer.project(focusedStation.index);
-        const layer = playerLayerRef.current;
-        if (quad && layer) {
-          layer.style.left = `${quad.x}px`;
-          layer.style.top = `${quad.y}px`;
-          layer.style.width = `${quad.width}px`;
-          layer.style.height = `${quad.height}px`;
-        }
+      const world = worldRef.current;
+      if (world && gpuRef.current && !mobileRef.current && !reduced) {
+        const yaw = (lookRef.current.yaw * 180) / Math.PI;
+        const pitch = (lookRef.current.pitch * 180) / Math.PI;
+        world.style.transform = `rotateX(${pitch}deg) rotateY(${yaw}deg) translate3d(0px, 36px, ${-dollyRef.current * 220}px)`;
       }
 
       pointerRef.current.vx *= 0.86;
@@ -250,10 +186,10 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
 
     frame = window.requestAnimationFrame(tick);
     return () => window.cancelAnimationFrame(frame);
-  }, [gpuReady, stations]);
+  }, [stations.length]);
 
   useEffect(() => {
-    if (frozen || !gpuReady) {
+    if (frozen) {
       return;
     }
 
@@ -262,23 +198,18 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
         return;
       }
       event.preventDefault();
-      targetRef.current = clamp(
-        targetRef.current + event.deltaY * 0.0032,
-        0,
-        last,
-      );
+      targetRef.current = clamp(targetRef.current + event.deltaY * 0.0032, 0, last);
     };
 
     window.addEventListener("wheel", onWheel, { passive: false });
     return () => window.removeEventListener("wheel", onWheel);
-  }, [dockSlug, frozen, gpuReady, last]);
+  }, [dockSlug, frozen, last]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setDockSlug(null);
         setMenuOpen(false);
-        setPlayingId(null);
         return;
       }
       if (dockSlug) {
@@ -317,7 +248,7 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
     if (
       dockSlug ||
       (event.target instanceof Element &&
-        event.target.closest("button, a, .note-dock, .plane-player"))
+        event.target.closest("button, a, .note-dock, .station-plane"))
     ) {
       return;
     }
@@ -327,8 +258,6 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
     pointer.startX = event.clientX;
     pointer.startY = event.clientY;
     pointer.startDolly = targetRef.current;
-    pointer.lastX = event.clientX;
-    pointer.lastY = event.clientY;
     event.currentTarget.setPointerCapture(event.pointerId);
   };
 
@@ -375,45 +304,21 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
 
     if (
       event.target instanceof Element &&
-      event.target.closest("button, a, .note-dock, .plane-player, .fallback-plane")
+      event.target.closest("button, a, .note-dock, .station-plane")
     ) {
       return;
     }
 
-    const renderer = rendererRef.current;
-    let hit = index;
-    if (renderer && gpuReady) {
-      const picked = renderer.pick(event.clientX, event.clientY);
-      if (picked !== null) {
-        hit = picked;
+    const stationNode =
+      event.target instanceof Element
+        ? event.target.closest("[data-station]")
+        : null;
+    if (stationNode instanceof HTMLElement) {
+      const hit = Number(stationNode.dataset.station);
+      if (Number.isFinite(hit) && hit !== index) {
+        goTo(hit);
       }
     }
-
-    if (hit !== index) {
-      goTo(hit);
-      return;
-    }
-
-    const station = stations[hit];
-    if (!station) {
-      return;
-    }
-    if (station.kind === "film") {
-      setPlayingId(station.youtubeId);
-      if (renderer && gpuReady) {
-        const quad = renderer.project(station.index);
-        if (quad) {
-          setPlayerRect({
-            x: quad.x,
-            y: quad.y,
-            width: quad.width,
-            height: quad.height,
-          });
-        }
-      }
-      return;
-    }
-    openNote(station.slug);
   };
 
   const navTo = (nextHash: "#work" | "#writing") => {
@@ -434,32 +339,37 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
     >
       <canvas ref={canvasRef} className="spatial-canvas" aria-hidden />
 
-      {showHtmlPlane && current ? (
-        <div className="fallback-stage">
-          <FallbackPlane station={current} onOpenNote={openNote} />
+      {showVolumeStations ? (
+        <div className="volume-stage">
+          <div ref={worldRef} className="volume-world">
+            {stations.map((station) => (
+              <div
+                key={`${station.kind}-${station.index}`}
+                data-station={station.index}
+                className={`volume-station${station.index === index ? " is-focused" : ""}`}
+                style={{
+                  width: station.size[0] * WORLD,
+                  height: station.size[1] * WORLD,
+                  transform: `translate3d(${station.position[0] * WORLD}px, ${-station.position[1] * WORLD}px, ${station.position[2] * WORLD}px) translate(-50%, -50%)`,
+                }}
+              >
+                <StationPlane
+                  station={station}
+                  onOpenNote={openNote}
+                  resetKey={`${station.kind}-${station.index}-${station.index === index}`}
+                />
+              </div>
+            ))}
+          </div>
         </div>
       ) : null}
 
-      {gpuReady && playingStation ? (
-        <div
-          ref={playerLayerRef}
-          className="plane-player"
-          style={
-            playerRect
-              ? {
-                  left: playerRect.x,
-                  top: playerRect.y,
-                  width: playerRect.width,
-                  height: playerRect.height,
-                }
-              : undefined
-          }
-        >
-          <YoutubePlayer
-            key={playingStation.youtubeId}
-            youtubeId={playingStation.youtubeId}
-            title={stationLabel(playingStation)}
-            autoPlay
+      {(!showVolumeStations && current) ? (
+        <div className="fallback-stage">
+          <StationPlane
+            station={current}
+            onOpenNote={openNote}
+            resetKey={`${current.kind}-${current.index}`}
           />
         </div>
       ) : null}
