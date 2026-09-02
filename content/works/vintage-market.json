@@ -1,0 +1,16 @@
+{
+  "slug": "vintage-market",
+  "kind": "build",
+  "href": "https://little-crazy-store.vercel.app",
+  "repo": "https://github.com/Doringber/vintage-market",
+  "year": 2026,
+  "kicker": "BUILD",
+  "title": {
+    "he": "חנות קטנה ומטריפה",
+    "en": "Little Crazy Store"
+  },
+  "summary": {
+    "he": "חנות יד שנייה לילדים בסגנון יד2.",
+    "en": "Kids second-hand shop (clothes, finds, toys)."
+  }
+}

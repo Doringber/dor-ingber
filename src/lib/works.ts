@@ -1,6 +1,15 @@
 import fs from "node:fs";
 import path from "node:path";
-import type { LocaleText, Work, WorkKind } from "@/lib/types";
+import {
+  isFilmKind,
+  isFilmWork,
+  isLinkedKind,
+  type FilmWork,
+  type LinkedWork,
+  type LocaleText,
+  type Work,
+  type WorkKind,
+} from "@/lib/types";
 
 const WORKS_DIR = path.join(process.cwd(), "content/works");
 
@@ -13,7 +22,16 @@ function isLocaleText(value: unknown): value is LocaleText {
 }
 
 function isWorkKind(value: unknown): value is WorkKind {
-  return value === "short" || value === "series";
+  return (
+    value === "short" ||
+    value === "series" ||
+    value === "game" ||
+    value === "build"
+  );
+}
+
+function optionalString(value: unknown): string | undefined {
+  return typeof value === "string" ? value : undefined;
 }
 
 function parseWork(raw: unknown, fileName: string): Work {
@@ -22,37 +40,73 @@ function parseWork(raw: unknown, fileName: string): Work {
   }
 
   const record = raw as Record<string, unknown>;
-  const slug = typeof record.slug === "string" ? record.slug : undefined;
-  const youtubeId =
-    typeof record.youtubeId === "string" ? record.youtubeId : undefined;
+  const slug = optionalString(record.slug);
   const year = typeof record.year === "number" ? record.year : undefined;
 
-  if (!slug || !youtubeId || year === undefined || !isWorkKind(record.kind)) {
+  if (!slug || year === undefined || !isWorkKind(record.kind)) {
     throw new Error(`Missing required fields in ${fileName}`);
   }
   if (!isLocaleText(record.title)) {
     throw new Error(`Work ${fileName} needs bilingual title.he and title.en`);
   }
 
-  const work: Work = {
+  const base = {
     slug,
-    youtubeId,
     year,
-    kind: record.kind,
     title: record.title,
+    ...(record.featured === true ? { featured: true as const } : {}),
+    ...(isLocaleText(record.summary) ? { summary: record.summary } : {}),
   };
 
-  if (record.featured === true) {
-    work.featured = true;
+  if (isFilmKind(record.kind)) {
+    const youtubeId = optionalString(record.youtubeId);
+    if (!youtubeId) {
+      throw new Error(`Film work ${fileName} needs youtubeId`);
+    }
+
+    const work: FilmWork = {
+      ...base,
+      kind: record.kind,
+      youtubeId,
+    };
+    return work;
   }
-  if (isLocaleText(record.summary)) {
-    work.summary = record.summary;
+
+  if (!isLinkedKind(record.kind)) {
+    throw new Error(`Missing required fields in ${fileName}`);
+  }
+
+  if (optionalString(record.youtubeId)) {
+    throw new Error(`Work ${fileName} of kind ${record.kind} must not include youtubeId`);
+  }
+
+  const href = optionalString(record.href);
+  if (!href) {
+    throw new Error(`Work ${fileName} needs href`);
+  }
+
+  const work: LinkedWork = {
+    ...base,
+    kind: record.kind,
+    href,
+  };
+
+  const repo = optionalString(record.repo);
+  if (repo) {
+    work.repo = repo;
+  }
+  const kicker = optionalString(record.kicker);
+  if (kicker) {
+    work.kicker = kicker;
   }
 
   return work;
 }
 
 function compareWorks(a: Work, b: Work): number {
+  if (isFilmWork(a) !== isFilmWork(b)) {
+    return isFilmWork(a) ? -1 : 1;
+  }
   if (Boolean(a.featured) !== Boolean(b.featured)) {
     return a.featured ? -1 : 1;
   }
