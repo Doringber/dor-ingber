@@ -1,3 +1,4 @@
+import { linkedStillSrc, planeKicker, type StationKicker } from "@/lib/kickers";
 import {
   isFilmWork,
   isLinkedWork,
@@ -18,6 +19,7 @@ export type FilmStation = {
   kind: "film";
   index: number;
   slug: string;
+  kicker: StationKicker;
   youtubeId: string;
   title: LocaleText;
   position: [number, number, number];
@@ -28,6 +30,7 @@ export type LinkStation = {
   kind: "game" | "build";
   index: number;
   slug: string;
+  kicker: StationKicker;
   href: string;
   title: LocaleText;
   position: [number, number, number];
@@ -38,6 +41,7 @@ export type NoteStation = {
   kind: "note";
   index: number;
   slug: string;
+  kicker: StationKicker;
   title: LocaleText;
   date: string;
   content: string;
@@ -82,6 +86,7 @@ export function buildStations(
         kind: "film",
         index: stations.length,
         slug: work.slug,
+        kicker: planeKicker({ kind: "film", slug: work.slug }),
         youtubeId: work.youtubeId,
         title: work.title,
         position: pose.position,
@@ -96,6 +101,7 @@ export function buildStations(
         kind: work.kind,
         index: stations.length,
         slug: work.slug,
+        kicker: planeKicker({ kind: work.kind, slug: work.slug }),
         href: work.href,
         title: work.title,
         position: pose.position,
@@ -111,6 +117,7 @@ export function buildStations(
       kind: "note",
       index: stations.length,
       slug: note.slug,
+      kicker: planeKicker({ kind: "note", slug: note.slug }),
       title: note.title,
       date: note.date,
       content: note.content,
@@ -135,28 +142,13 @@ export function stationLabel(station: SpatialStation): string {
   return `${station.title.he} / ${station.title.en}`;
 }
 
-export function stationKicker(station: SpatialStation): string {
-  switch (station.kind) {
-    case "film":
-      return "FILM";
-    case "game":
-      return "GAME";
-    case "build":
-      return "BUILD";
-    case "note":
-      return "NOTE";
-  }
+export function stationKicker(station: Pick<SpatialStation, "kind" | "slug">): StationKicker {
+  return planeKicker(station);
 }
-
-const STILL_POSTERS: Record<string, string> = {
-  findmywatermalon: "/stills/findmywatermalon.jpg",
-  thinkingbreak: "/stills/thinkingbreak.jpg",
-  "vintage-market": "/stills/vintage-market.jpg",
-};
 
 export function stationStillSrc(station: SpatialStation): string | null {
   if (station.kind !== "game" && station.kind !== "build") {
     return null;
   }
-  return STILL_POSTERS[station.slug] ?? null;
+  return linkedStillSrc(station.slug);
 }
