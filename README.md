@@ -21,9 +21,11 @@ Loaders in `src/lib`:
 - `getWorks()` / `getWork(slug)`
 - `getWriting()` / `getWritingBySlug(slug)`
 
-The homepage is a single spatial volume with five stations: the first 3 works (featured first, then year) and the first 2 notes by date descending. There is no second information architecture.
+The homepage is a single spatial volume. `getWorks()` returns films first (featured, then year, then slug), then game/build works. Film stations still use the first 3 films; notes stay the first 2 by date descending. There is no second information architecture.
 
 ### Work JSON
+
+Films (`short` | `series`) require `youtubeId` and must not use a live `href`:
 
 ```json
 {
@@ -37,7 +39,22 @@ The homepage is a single spatial volume with five stations: the first 3 works (f
 }
 ```
 
-Store `youtubeId` only. Posters use `https://i.ytimg.com/vi/{id}/hqdefault.jpg` (proxied at `/api/poster/[id]` for WebGPU). Players load `youtube-nocookie` after click.
+Games and builds (`game` | `build`) require `href` and must not include `youtubeId`:
+
+```json
+{
+  "slug": "findmywatermalon",
+  "kind": "game",
+  "href": "https://example.com/play",
+  "repo": "https://github.com/example/play",
+  "year": 2026,
+  "kicker": "GAME",
+  "title": { "he": "…", "en": "…" },
+  "summary": { "he": "…", "en": "…" }
+}
+```
+
+Film posters use `https://i.ytimg.com/vi/{id}/hqdefault.jpg` (proxied at `/api/poster/[id]` for WebGPU). Players load `youtube-nocookie` after click.
 
 ### Writing MDX
 

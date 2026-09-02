@@ -1,4 +1,4 @@
-import type { LocaleText, Work, WritingNote } from "@/lib/types";
+import { isFilmWork, type LocaleText, type Work, type WritingNote } from "@/lib/types";
 import { formatNoteNumber } from "@/lib/writing-format";
 
 export const LOOK_CLAMP_RAD = (12 * Math.PI) / 180;
@@ -50,17 +50,20 @@ export function buildStations(
   works: Work[],
   notes: WritingNote[],
 ): SpatialStation[] {
-  const films: SpatialStation[] = works.slice(0, 3).map((work, index) => {
-    const pose = FILM_POSES[index] ?? FILM_POSES[FILM_POSES.length - 1];
-    return {
-      kind: "film",
-      index,
-      youtubeId: work.youtubeId,
-      title: work.title,
-      position: pose.position,
-      size: pose.size,
-    };
-  });
+  const films: SpatialStation[] = works
+    .filter(isFilmWork)
+    .slice(0, 3)
+    .map((work, index) => {
+      const pose = FILM_POSES[index] ?? FILM_POSES[FILM_POSES.length - 1];
+      return {
+        kind: "film",
+        index,
+        youtubeId: work.youtubeId,
+        title: work.title,
+        position: pose.position,
+        size: pose.size,
+      };
+    });
 
   const slabs: SpatialStation[] = notes.slice(0, 2).map((note, index) => {
     const pose = NOTE_POSES[index] ?? NOTE_POSES[NOTE_POSES.length - 1];
