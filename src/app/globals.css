@@ -4,7 +4,7 @@
   --color-page: #050507;
   --color-ink: #f2f2f2;
   --color-mute: #8a8a8a;
-  --color-kicker: #087a4c;
+  --color-kicker: #12a86a;
   --color-teal: #087a4c;
   --color-line: #1c1c1e;
   --color-panel: #0a0a0c;
@@ -305,7 +305,7 @@ button {
   left: 0;
   top: 0;
   transform-style: preserve-3d;
-  pointer-events: auto;
+  pointer-events: none;
 }
 
 .volume-station .fallback-plane {
@@ -334,11 +334,20 @@ button {
   pointer-events: none;
 }
 
+.fallback-measure {
+  pointer-events: none;
+}
+
+.fallback-measure.is-note,
+.fallback-measure.is-note .fallback-plane {
+  pointer-events: auto;
+}
+
 .fallback-plane {
   position: relative;
   overflow: hidden;
   border-radius: 10px;
-  pointer-events: auto;
+  pointer-events: none;
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
 }
 
@@ -347,6 +356,7 @@ button {
 }
 
 .fallback-note {
+  display: flex;
   width: min(320px, calc(100vw - 48px));
   min-height: 440px;
   flex-direction: column;
@@ -386,6 +396,11 @@ button {
   border: 0;
 }
 
+.media-iframe {
+  filter: none;
+  pointer-events: auto;
+}
+
 .media-image {
   object-fit: cover;
   filter: grayscale(1) contrast(1.12) brightness(0.92);
@@ -423,6 +438,54 @@ button {
 
 .play-button svg {
   margin-inline-start: 2px;
+}
+
+.media-play-fallback {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 2;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  transform: translate(-50%, -50%);
+}
+
+.hit-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 18;
+  pointer-events: none;
+}
+
+.hit-target {
+  position: fixed;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  pointer-events: auto;
+  touch-action: manipulation;
+}
+
+.note-hits {
+  position: absolute;
+  right: 16px;
+  bottom: 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  pointer-events: none;
+}
+
+.note-hit {
+  color: var(--color-kicker);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  pointer-events: auto;
 }
 
 .note-dock {
@@ -560,11 +623,23 @@ button {
   .mobile-only {
     display: none !important;
   }
+
+  .note-hits {
+    top: 210px;
+    left: 28px;
+    right: auto;
+    bottom: auto;
+    align-items: flex-start;
+  }
 }
 
 @media (max-width: 719px) {
   .desktop-only {
     display: none !important;
+  }
+
+  .spatial-wordmark {
+    font-size: clamp(40px, 11vw, 48px);
   }
 
   .spatial-brand {

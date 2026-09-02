@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { HitLayer } from "@/components/hit-layer";
 import { NoteDock } from "@/components/note-dock";
 import { StationPlane } from "@/components/station-plane";
 import { hasWebGPU } from "@/lib/gpu/detect";
@@ -56,9 +57,22 @@ function getServerHash(): string {
   return "";
 }
 
+function isChromeTarget(target: EventTarget | null): boolean {
+  return (
+    target instanceof Element &&
+    Boolean(
+      target.closest(
+        "iframe, .note-dock, .spatial-chrome button, .mobile-menu, .note-hit",
+      ),
+    )
+  );
+}
+
 export function SpatialHome({ stations }: SpatialHomeProps) {
+  const rootRef = useRef<HTMLElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const worldRef = useRef<HTMLDivElement>(null);
+  const ignoreTapRef = useRef(false);
   const dollyRef = useRef(0);
   const targetRef = useRef(0);
   const lookRef = useRef({ yaw: 0, pitch: 0 });
@@ -88,6 +102,8 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
   const index = userIndex ?? hashIndex;
   const [dockSlug, setDockSlug] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [playingId, setPlayingId] = useState<number | null>(null);
+  const [rootNode, setRootNode] = useState<HTMLElement | null>(null);
 
   const last = Math.max(stations.length - 1, 0);
   const current = stations[index] ?? stations[0];
@@ -103,6 +119,11 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
   const onePlane = mobile || frozen;
   const showVolumeStations = gpuReady && !onePlane;
 
+  const setFocusedIndex = useCallback((next: number) => {
+    setUserIndex(next);
+    setPlayingId((id) => (id === next ? id : null));
+  }, []);
+
   const goTo = useCallback(
     (next: number, immediate = false) => {
       const clamped = clamp(next, 0, last);
@@ -110,14 +131,31 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
       if (immediate || reducedRef.current) {
         dollyRef.current = clamped;
       }
-      setUserIndex(clamped);
+      setFocusedIndex(clamped);
     },
-    [last],
+    [last, setFocusedIndex],
   );
 
   const openNote = useCallback((slug: string) => {
     setDockSlug(slug);
     setMenuOpen(false);
+  }, []);
+
+  const playStation = useCallback((stationIndex: number) => {
+    setPlayingId(stationIndex);
+  }, []);
+
+  const shouldIgnoreTap = useCallback(() => ignoreTapRef.current, []);
+
+  const markSwipe = () => {
+    ignoreTapRef.current = true;
+    window.setTimeout(() => {
+      ignoreTapRef.current = false;
+    }, 50);
+  };
+
+  useEffect(() => {
+    setRootNode(rootRef.current);
   }, []);
 
   useEffect(() => {
@@ -169,7 +207,7 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
       const focused = snapDolly(dollyRef.current, stations.length);
       if (focused !== indexRef.current) {
         indexRef.current = focused;
-        setUserIndex(focused);
+        setFocusedIndex(focused);
       }
 
       const world = worldRef.current;
@@ -186,7 +224,7 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
 
     frame = window.requestAnimationFrame(tick);
     return () => window.cancelAnimationFrame(frame);
-  }, [stations.length]);
+  }, [setFocusedIndex, stations.length]);
 
   useEffect(() => {
     if (frozen) {
@@ -245,11 +283,7 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
   };
 
   const onPointerDown = (event: React.PointerEvent<HTMLElement>) => {
-    if (
-      dockSlug ||
-      (event.target instanceof Element &&
-        event.target.closest("button, a, .note-dock, .station-plane"))
-    ) {
+    if (dockSlug || isChromeTarget(event.target)) {
       return;
     }
     const pointer = pointerRef.current;
@@ -285,39 +319,37 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
     const pointer = pointerRef.current;
     const dx = event.clientX - pointer.startX;
     const wasDragging = pointer.dragging;
+    const wasDown = pointer.down;
     pointer.down = false;
     pointer.dragging = false;
 
-    if (dockSlug) {
+    if (dockSlug || !wasDown) {
       return;
     }
 
     if ((mobile || frozen || !gpuReady) && wasDragging && Math.abs(dx) > 40) {
+      markSwipe();
       goTo(Math.round(targetRef.current) + (dx < 0 ? 1 : -1));
       return;
     }
 
     if (wasDragging) {
+      markSwipe();
       goTo(Math.round(targetRef.current));
       return;
     }
 
-    if (
-      event.target instanceof Element &&
-      event.target.closest("button, a, .note-dock, .station-plane")
-    ) {
+    if (isChromeTarget(event.target)) {
       return;
     }
 
-    const stationNode =
-      event.target instanceof Element
-        ? event.target.closest("[data-station]")
-        : null;
-    if (stationNode instanceof HTMLElement) {
-      const hit = Number(stationNode.dataset.station);
-      if (Number.isFinite(hit) && hit !== index) {
-        goTo(hit);
-      }
+    if (
+      onePlane &&
+      current?.kind === "note" &&
+      event.target instanceof Element &&
+      event.target.closest("[data-station]")
+    ) {
+      openNote(current.slug);
     }
   };
 
@@ -331,6 +363,7 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
 
   return (
     <main
+      ref={rootRef}
       className={`spatial-root${onePlane ? " is-one-plane" : ""}${gpuReady ? " is-gpu" : " is-fallback"}`}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
@@ -355,8 +388,9 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
               >
                 <StationPlane
                   station={station}
-                  onOpenNote={openNote}
                   resetKey={`${station.kind}-${station.index}-${station.index === index}`}
+                  playing={playingId === station.index}
+                  onPlay={() => playStation(station.index)}
                 />
               </div>
             ))}
@@ -364,15 +398,33 @@ export function SpatialHome({ stations }: SpatialHomeProps) {
         </div>
       ) : null}
 
-      {(!showVolumeStations && current) ? (
+      {!showVolumeStations && current ? (
         <div className="fallback-stage">
-          <StationPlane
-            station={current}
-            onOpenNote={openNote}
-            resetKey={`${current.kind}-${current.index}`}
-          />
+          <div
+            data-station={current.index}
+            className={`fallback-measure${current.kind === "note" ? " is-note" : ""}`}
+          >
+            <StationPlane
+              station={current}
+              resetKey={`${current.kind}-${current.index}`}
+              playing={playingId === current.index}
+              onPlay={() => playStation(current.index)}
+            />
+          </div>
         </div>
       ) : null}
+
+      <HitLayer
+        root={rootNode}
+        stations={stations}
+        focused={index}
+        playingId={playingId}
+        volume={showVolumeStations}
+        shouldIgnoreTap={shouldIgnoreTap}
+        onPlay={playStation}
+        onOpenNote={openNote}
+        onGoTo={goTo}
+      />
 
       <div className="spatial-chrome">
         <div className="spatial-brand">

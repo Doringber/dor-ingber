@@ -9,6 +9,8 @@ type YoutubePlayerProps = {
   title: string;
   heavyGrain?: boolean;
   autoPlay?: boolean;
+  playing?: boolean;
+  onPlay?: () => void;
 };
 
 export function YoutubePlayer({
@@ -16,8 +18,19 @@ export function YoutubePlayer({
   title,
   heavyGrain = true,
   autoPlay = false,
+  playing: playingProp,
+  onPlay,
 }: YoutubePlayerProps) {
-  const [playing, setPlaying] = useState(autoPlay);
+  const [internalPlaying, setInternalPlaying] = useState(autoPlay);
+  const playing = playingProp ?? internalPlaying;
+
+  const play = () => {
+    if (onPlay) {
+      onPlay();
+      return;
+    }
+    setInternalPlaying(true);
+  };
 
   return (
     <div className="media-frame">
@@ -30,18 +43,13 @@ export function YoutubePlayer({
           allowFullScreen
         />
       ) : (
-        <button
-          type="button"
-          className="media-poster tap"
-          onClick={() => setPlaying(true)}
-          aria-label={`Play ${title}`}
-        >
+        <div className="media-poster">
           <Image
             src={youtubePoster(youtubeId)}
             alt=""
             fill
             unoptimized
-            sizes="(max-width: 720px) 100vw, 360px"
+            sizes="(max-width: 720px) 100vw, 920px"
             className="media-image"
             onError={(event) => {
               event.currentTarget.style.visibility = "hidden";
@@ -54,7 +62,15 @@ export function YoutubePlayer({
               <path d="M8 5.14v13.72L19 12 8 5.14Z" />
             </svg>
           </span>
-        </button>
+          {onPlay ? null : (
+            <button
+              type="button"
+              className="media-play-fallback tap"
+              onClick={play}
+              aria-label={`Play ${title}`}
+            />
+          )}
+        </div>
       )}
     </div>
   );

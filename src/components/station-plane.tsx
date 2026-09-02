@@ -5,11 +5,17 @@ import { stationLabel, type SpatialStation } from "@/lib/stations";
 
 type StationPlaneProps = {
   station: SpatialStation;
-  onOpenNote: (slug: string) => void;
   resetKey?: string;
+  playing?: boolean;
+  onPlay?: () => void;
 };
 
-export function StationPlane({ station, onOpenNote, resetKey }: StationPlaneProps) {
+export function StationPlane({
+  station,
+  resetKey,
+  playing,
+  onPlay,
+}: StationPlaneProps) {
   if (station.kind === "film") {
     return (
       <div className="station-plane fallback-plane fallback-film">
@@ -17,22 +23,20 @@ export function StationPlane({ station, onOpenNote, resetKey }: StationPlaneProp
           key={resetKey ?? station.youtubeId}
           youtubeId={station.youtubeId}
           title={stationLabel(station)}
+          playing={playing}
+          onPlay={onPlay}
         />
       </div>
     );
   }
 
   return (
-    <button
-      type="button"
-      className="station-plane fallback-plane fallback-note tap"
-      onClick={() => onOpenNote(station.slug)}
-    >
+    <div className="station-plane fallback-plane fallback-note">
       <span className="fallback-note-body" dir="rtl" lang="he">
         {station.title.he}
       </span>
       <span className="kicker">NOTE · {station.noteNumber}</span>
       <span className="grain-thumb" aria-hidden />
-    </button>
+    </div>
   );
 }
